@@ -5,13 +5,12 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test test/*.test.js"
   },
-  "keywords": [
-    "wdk",
-    "tether",
-    "wallet"
-  ],
+  "keywords": ["wdk", "tether", "wallet"],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@noble/hashes": "^1.4.0"
+  }
 }

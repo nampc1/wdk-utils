@@ -1,44 +1,67 @@
 /**
- * Checks if a string is a valid Pay-to-Script-Hash (P2SH) address.
- * P2SH addresses typically start with a '3' on the Bitcoin mainnet.
+ * Bitcoin address validation (aligned with Rumble).
+ * Format/length checks only (no base58check or bech32 decode).
+ */
+
+const BASE58_CHARS = /^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/;
+
+/**
+ * Validates a Bitcoin address (format only).
+ * Supports: P2PKH (1...), P2SH (3...), Bech32 (bc1...).
  *
- * @param {string} address The address to check.
- * @returns {boolean} True if the address is a valid P2SH address.
+ * @param {string} address
+ * @returns {boolean}
+ */
+export function isValidBitcoinAddress(address) {
+  if (!address || typeof address !== 'string') return false;
+  const trimmed = address.trim();
+
+  if (trimmed.startsWith('1') && trimmed.length >= 26 && trimmed.length <= 35) {
+    return BASE58_CHARS.test(trimmed);
+  }
+  if (trimmed.startsWith('3') && trimmed.length >= 26 && trimmed.length <= 35) {
+    return BASE58_CHARS.test(trimmed);
+  }
+  if (trimmed.startsWith('bc1') && trimmed.length >= 14 && trimmed.length <= 74) {
+    return /^bc1[a-z0-9]{13,71}$/i.test(trimmed);
+  }
+  return false;
+}
+
+/** Alias for isValidBitcoinAddress (Rumble uses isValidBitcoinAddress). */
+export function isBitcoinAddress(address) {
+  return isValidBitcoinAddress(address);
+}
+
+/**
+ * P2SH format (starts with 3, 26-35 base58 chars).
+ * @param {string} address
+ * @returns {boolean}
  */
 export function isP2SH(address) {
-  throw new Error('Not implemented');
+  if (!address || typeof address !== 'string') return false;
+  const t = address.trim();
+  return t.startsWith('3') && t.length >= 26 && t.length <= 35 && BASE58_CHARS.test(t);
 }
 
 /**
- * Checks if a string is a valid legacy Pay-to-Public-Key-Hash (P2PKH) address.
- * P2PKH addresses typically starts with a '1' on the Bitcoin mainnet.
- *
- * @param {string} address The address to check.
- * @returns {boolean} True if the address is a valid P2PKH address.
+ * P2PKH format (starts with 1, 26-35 base58 chars).
+ * @param {string} address
+ * @returns {boolean}
  */
 export function isP2PKH(address) {
-  throw new Error('Not implemented');
+  if (!address || typeof address !== 'string') return false;
+  const t = address.trim();
+  return t.startsWith('1') && t.length >= 26 && t.length <= 35 && BASE58_CHARS.test(t);
 }
 
 /**
- * Checks if a string is a valid Bech32 address (SegWit).
- * This includes both Bech32 (P2WPKH/P2WSH, BIP 84) and Bech32m (P2TR, BIP 86).
- * These addresses start with 'bc1'.
- *
- * @param {string} address The address to check.
- * @returns {boolean} True if the address is a valid Bech32 or Bech32m address.
+ * Bech32 format (bc1..., 14-74 chars).
+ * @param {string} address
+ * @returns {boolean}
  */
 export function isBech32(address) {
-  throw new Error('Not implemented');
-}
-
-/**
- * Checks if a string is any valid Bitcoin address (P2SH, P2PKH, or Bech32/Bech32m).
- * This is the one-stop-shop validation function.
- *
- * @param {string} address The address to check.
- * @returns {boolean} True if the address is a valid Bitcoin address.
- */
-export function isBitcoinAddress(address) {
-  throw new Error('Not implemented');
+  if (!address || typeof address !== 'string') return false;
+  const t = address.trim();
+  return t.startsWith('bc1') && t.length >= 14 && t.length <= 74 && /^bc1[a-z0-9]{13,71}$/i.test(t);
 }
