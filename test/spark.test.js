@@ -1,5 +1,3 @@
-import { describe, it } from 'node:test';
-import assert from 'node:assert';
 import { isValidSparkAddress, isSparkAddress } from '../src/address-validation/spark.js';
 
 describe('spark', () => {
@@ -8,25 +6,25 @@ describe('spark', () => {
 
   describe('isValidSparkAddress / isSparkAddress', () => {
     it('accepts Bitcoin-like address', () => {
-      assert.strictEqual(isValidSparkAddress(validBtc), true);
-      assert.strictEqual(isSparkAddress(validBtc), true);
+      expect(isValidSparkAddress(validBtc)).toBe(true);
+      expect(isSparkAddress(validBtc)).toBe(true);
     });
     it('accepts 20-100 char alphanumeric', () => {
-      assert.strictEqual(isValidSparkAddress(validAlphanumeric), true);
-      assert.strictEqual(isValidSparkAddress('A1b2C3' + 'x'.repeat(14)), true);
+      expect(isValidSparkAddress(validAlphanumeric)).toBe(true);
+      expect(isValidSparkAddress('A1b2C3' + 'x'.repeat(14))).toBe(true);
     });
     it('rejects alphanumeric shorter than 20', () => {
-      assert.strictEqual(isValidSparkAddress('a'.repeat(19)), false);
+      expect(isValidSparkAddress('a'.repeat(19))).toBe(false);
     });
     it('rejects alphanumeric longer than 100', () => {
-      assert.strictEqual(isValidSparkAddress('a'.repeat(101)), false);
+      expect(isValidSparkAddress('a'.repeat(101))).toBe(false);
     });
     it('rejects non-alphanumeric in long string', () => {
-      assert.strictEqual(isValidSparkAddress('a'.repeat(20) + '-'), false);
+      expect(isValidSparkAddress('a'.repeat(20) + '-')).toBe(false);
     });
     it('rejects empty or non-string', () => {
-      assert.strictEqual(isValidSparkAddress(''), false);
-      assert.strictEqual(isValidSparkAddress(null), false);
+      expect(isValidSparkAddress('')).toBe(false);
+      expect(isValidSparkAddress(null)).toBe(false);
     });
   });
 });

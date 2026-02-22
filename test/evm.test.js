@@ -1,5 +1,3 @@
-import { describe, it } from 'node:test';
-import assert from 'node:assert';
 import {
   validateEVMAddressDetailed,
   isValidEVMAddress,
@@ -14,41 +12,40 @@ describe('evm', () => {
 
   describe('validateEVMAddressDetailed', () => {
     it('accepts all-lowercase address', () => {
-      assert.deepStrictEqual(validateEVMAddressDetailed(validLowercase), { isValid: true });
+      expect(validateEVMAddressDetailed(validLowercase)).toEqual({ isValid: true });
     });
     it('accepts valid EIP-55 checksummed address', () => {
-      assert.deepStrictEqual(validateEVMAddressDetailed(validChecksummed), { isValid: true });
+      expect(validateEVMAddressDetailed(validChecksummed)).toEqual({ isValid: true });
     });
     it('returns checksum error for wrong mixed case', () => {
-      assert.deepStrictEqual(validateEVMAddressDetailed(invalidChecksum), {
+      expect(validateEVMAddressDetailed(invalidChecksum)).toEqual({
         isValid: false,
         error: 'checksum',
       });
     });
     it('returns format error for missing 0x', () => {
-      assert.deepStrictEqual(validateEVMAddressDetailed('742d35cc6634c0532925a3b844bc454e4438f44e'), {
+      expect(validateEVMAddressDetailed('742d35cc6634c0532925a3b844bc454e4438f44e')).toEqual({
         isValid: false,
         error: 'format',
       });
     });
     it('returns format error for wrong length', () => {
-      assert.deepStrictEqual(validateEVMAddressDetailed('0x742d35cc'), {
+      expect(validateEVMAddressDetailed('0x742d35cc')).toEqual({
         isValid: false,
         error: 'format',
       });
     });
     it('returns format error for non-hex', () => {
-      assert.deepStrictEqual(
-        validateEVMAddressDetailed('0x742d35cc6634c0532925a3b844bc454e4438f44z'),
-        { isValid: false, error: 'format' }
-      );
+      expect(
+        validateEVMAddressDetailed('0x742d35cc6634c0532925a3b844bc454e4438f44z')
+      ).toEqual({ isValid: false, error: 'format' });
     });
     it('returns format error for empty or non-string', () => {
-      assert.deepStrictEqual(validateEVMAddressDetailed(''), { isValid: false, error: 'format' });
-      assert.deepStrictEqual(validateEVMAddressDetailed(null), { isValid: false, error: 'format' });
+      expect(validateEVMAddressDetailed('')).toEqual({ isValid: false, error: 'format' });
+      expect(validateEVMAddressDetailed(null)).toEqual({ isValid: false, error: 'format' });
     });
     it('trims whitespace', () => {
-      assert.deepStrictEqual(validateEVMAddressDetailed('  ' + validLowercase + '  '), {
+      expect(validateEVMAddressDetailed('  ' + validLowercase + '  ')).toEqual({
         isValid: true,
       });
     });
@@ -56,36 +53,36 @@ describe('evm', () => {
 
   describe('isValidEVMAddress', () => {
     it('returns true for valid addresses', () => {
-      assert.strictEqual(isValidEVMAddress(validLowercase), true);
-      assert.strictEqual(isValidEVMAddress(validChecksummed), true);
+      expect(isValidEVMAddress(validLowercase)).toBe(true);
+      expect(isValidEVMAddress(validChecksummed)).toBe(true);
     });
     it('returns false for invalid checksum mixed case', () => {
-      assert.strictEqual(isValidEVMAddress(invalidChecksum), false);
+      expect(isValidEVMAddress(invalidChecksum)).toBe(false);
     });
     it('returns false for bad format', () => {
-      assert.strictEqual(isValidEVMAddress('0xshort'), false);
+      expect(isValidEVMAddress('0xshort')).toBe(false);
     });
   });
 
   describe('isEvmAddress', () => {
     it('returns true for 0x + 40 hex', () => {
-      assert.strictEqual(isEvmAddress(validLowercase), true);
-      assert.strictEqual(isEvmAddress(validChecksummed), true);
+      expect(isEvmAddress(validLowercase)).toBe(true);
+      expect(isEvmAddress(validChecksummed)).toBe(true);
     });
     it('returns false for wrong length', () => {
-      assert.strictEqual(isEvmAddress('0x' + 'f'.repeat(41)), false);
+      expect(isEvmAddress('0x' + 'f'.repeat(41))).toBe(false);
     });
   });
 
   describe('isEip55Checksum', () => {
     it('returns true for valid checksum', () => {
-      assert.strictEqual(isEip55Checksum(validChecksummed), true);
+      expect(isEip55Checksum(validChecksummed)).toBe(true);
     });
     it('returns true for all lowercase', () => {
-      assert.strictEqual(isEip55Checksum(validLowercase), true);
+      expect(isEip55Checksum(validLowercase)).toBe(true);
     });
     it('returns false for invalid checksum', () => {
-      assert.strictEqual(isEip55Checksum(invalidChecksum), false);
+      expect(isEip55Checksum(invalidChecksum)).toBe(false);
     });
   });
 });

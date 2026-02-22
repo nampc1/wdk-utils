@@ -1,5 +1,3 @@
-import { describe, it } from 'node:test';
-import assert from 'node:assert';
 import {
   stripLightningPrefix,
   isValidLightningInvoice,
@@ -11,59 +9,59 @@ import {
 describe('lightning', () => {
   describe('stripLightningPrefix', () => {
     it('strips lightning: prefix (case-insensitive)', () => {
-      assert.strictEqual(stripLightningPrefix('lightning:lnbc1xxx'), 'lnbc1xxx');
-      assert.strictEqual(stripLightningPrefix('LIGHTNING:lnbc1xxx'), 'lnbc1xxx');
+      expect(stripLightningPrefix('lightning:lnbc1xxx')).toBe('lnbc1xxx');
+      expect(stripLightningPrefix('LIGHTNING:lnbc1xxx')).toBe('lnbc1xxx');
     });
     it('returns unchanged if no prefix', () => {
-      assert.strictEqual(stripLightningPrefix('lnbc1xxx'), 'lnbc1xxx');
+      expect(stripLightningPrefix('lnbc1xxx')).toBe('lnbc1xxx');
     });
     it('handles empty or non-string', () => {
-      assert.strictEqual(stripLightningPrefix(''), '');
-      assert.strictEqual(stripLightningPrefix(null), null);
+      expect(stripLightningPrefix('')).toBe('');
+      expect(stripLightningPrefix(null)).toBe(null);
     });
   });
 
   describe('isValidLightningInvoice / isLightningInvoice', () => {
     it('accepts lnbc with sufficient length', () => {
-      assert.strictEqual(isValidLightningInvoice('lnbc1' + 'x'.repeat(20)), true);
+      expect(isValidLightningInvoice('lnbc1' + 'x'.repeat(20))).toBe(true);
     });
     it('accepts lntb, lnbcrt, lni', () => {
-      assert.strictEqual(isValidLightningInvoice('lntb1' + 'x'.repeat(20)), true);
-      assert.strictEqual(isValidLightningInvoice('lnbcrt1' + 'x'.repeat(20)), true);
-      assert.strictEqual(isValidLightningInvoice('lni1' + 'x'.repeat(20)), true);
+      expect(isValidLightningInvoice('lntb1' + 'x'.repeat(20))).toBe(true);
+      expect(isValidLightningInvoice('lnbcrt1' + 'x'.repeat(20))).toBe(true);
+      expect(isValidLightningInvoice('lni1' + 'x'.repeat(20))).toBe(true);
     });
     it('rejects too short', () => {
-      assert.strictEqual(isValidLightningInvoice('lnbc1short'), false);
+      expect(isValidLightningInvoice('lnbc1short')).toBe(false);
     });
     it('rejects non-invoice prefix', () => {
-      assert.strictEqual(isValidLightningInvoice('lnxx1' + 'x'.repeat(20)), false);
+      expect(isValidLightningInvoice('lnxx1' + 'x'.repeat(20))).toBe(false);
     });
     it('rejects without ln', () => {
-      assert.strictEqual(isValidLightningInvoice('bc1' + 'x'.repeat(20)), false);
+      expect(isValidLightningInvoice('bc1' + 'x'.repeat(20))).toBe(false);
     });
     it('strips lightning: before validating', () => {
-      assert.strictEqual(isValidLightningInvoice('lightning:lnbc1' + 'x'.repeat(20)), true);
+      expect(isValidLightningInvoice('lightning:lnbc1' + 'x'.repeat(20))).toBe(true);
     });
     it('alias isLightningInvoice matches', () => {
-      assert.strictEqual(isLightningInvoice('lnbc1' + 'x'.repeat(20)), true);
+      expect(isLightningInvoice('lnbc1' + 'x'.repeat(20))).toBe(true);
     });
   });
 
   describe('isValidLightningAddressFormat / isLightningAddressFormat', () => {
     it('accepts email with dot in domain', () => {
-      assert.strictEqual(isValidLightningAddressFormat('user@getalby.com'), true);
-      assert.strictEqual(isValidLightningAddressFormat('u@a.co'), true);
+      expect(isValidLightningAddressFormat('user@getalby.com')).toBe(true);
+      expect(isValidLightningAddressFormat('u@a.co')).toBe(true);
     });
     it('rejects without dot in domain', () => {
-      assert.strictEqual(isValidLightningAddressFormat('user@localhost'), false);
+      expect(isValidLightningAddressFormat('user@localhost')).toBe(false);
     });
     it('rejects invalid format', () => {
-      assert.strictEqual(isValidLightningAddressFormat('notanemail'), false);
-      assert.strictEqual(isValidLightningAddressFormat('@domain.com'), false);
-      assert.strictEqual(isValidLightningAddressFormat('user@'), false);
+      expect(isValidLightningAddressFormat('notanemail')).toBe(false);
+      expect(isValidLightningAddressFormat('@domain.com')).toBe(false);
+      expect(isValidLightningAddressFormat('user@')).toBe(false);
     });
     it('alias isLightningAddressFormat matches', () => {
-      assert.strictEqual(isLightningAddressFormat('u@a.co'), true);
+      expect(isLightningAddressFormat('u@a.co')).toBe(true);
     });
   });
 });

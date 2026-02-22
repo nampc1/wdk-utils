@@ -1,5 +1,3 @@
-import { describe, it } from 'node:test';
-import assert from 'node:assert';
 import {
   isNetworkLightningCapable,
   validateAddressForNetwork,
@@ -16,71 +14,71 @@ const validSpark = 'a'.repeat(25);
 describe('validateForNetwork', () => {
   describe('isNetworkLightningCapable', () => {
     it('returns true for lightning, ln, spark, bitcoin-spark', () => {
-      assert.strictEqual(isNetworkLightningCapable('lightning'), true);
-      assert.strictEqual(isNetworkLightningCapable('ln'), true);
-      assert.strictEqual(isNetworkLightningCapable('spark'), true);
-      assert.strictEqual(isNetworkLightningCapable('bitcoin-spark'), true);
+      expect(isNetworkLightningCapable('lightning')).toBe(true);
+      expect(isNetworkLightningCapable('ln')).toBe(true);
+      expect(isNetworkLightningCapable('spark')).toBe(true);
+      expect(isNetworkLightningCapable('bitcoin-spark')).toBe(true);
     });
     it('returns false for EVM or unknown', () => {
-      assert.strictEqual(isNetworkLightningCapable('polygon'), false);
-      assert.strictEqual(isNetworkLightningCapable('ethereum'), false);
+      expect(isNetworkLightningCapable('polygon')).toBe(false);
+      expect(isNetworkLightningCapable('ethereum')).toBe(false);
     });
     it('returns false for empty/falsy', () => {
-      assert.strictEqual(isNetworkLightningCapable(''), false);
-      assert.strictEqual(isNetworkLightningCapable(null), false);
+      expect(isNetworkLightningCapable('')).toBe(false);
+      expect(isNetworkLightningCapable(null)).toBe(false);
     });
   });
 
   describe('validateAddressForNetwork', () => {
     it('validates EVM for polygon, ethereum, arbitrum, sepolia, plasma', () => {
-      assert.strictEqual(validateAddressForNetwork(validEvmLower, 'polygon'), true);
-      assert.strictEqual(validateAddressForNetwork(validEvmLower, 'ethereum'), true);
-      assert.strictEqual(validateAddressForNetwork(validEvmLower, 'arbitrum'), true);
-      assert.strictEqual(validateAddressForNetwork(validEvmLower, 'sepolia'), true);
-      assert.strictEqual(validateAddressForNetwork(validEvmLower, 'plasma'), true);
+      expect(validateAddressForNetwork(validEvmLower, 'polygon')).toBe(true);
+      expect(validateAddressForNetwork(validEvmLower, 'ethereum')).toBe(true);
+      expect(validateAddressForNetwork(validEvmLower, 'arbitrum')).toBe(true);
+      expect(validateAddressForNetwork(validEvmLower, 'sepolia')).toBe(true);
+      expect(validateAddressForNetwork(validEvmLower, 'plasma')).toBe(true);
     });
     it('validates Bitcoin for bitcoin network', () => {
-      assert.strictEqual(validateAddressForNetwork(validBtc, 'bitcoin'), true);
+      expect(validateAddressForNetwork(validBtc, 'bitcoin')).toBe(true);
     });
     it('validates Lightning invoice or address for lightning/ln', () => {
-      assert.strictEqual(validateAddressForNetwork(validInvoice, 'lightning'), true);
-      assert.strictEqual(validateAddressForNetwork(validLightningAddr, 'ln'), true);
+      expect(validateAddressForNetwork(validInvoice, 'lightning')).toBe(true);
+      expect(validateAddressForNetwork(validLightningAddr, 'ln')).toBe(true);
     });
     it('validates Lightning or Spark for spark/bitcoin-spark', () => {
-      assert.strictEqual(validateAddressForNetwork(validSpark, 'spark'), true);
-      assert.strictEqual(validateAddressForNetwork(validInvoice, 'bitcoin-spark'), true);
+      expect(validateAddressForNetwork(validSpark, 'spark')).toBe(true);
+      expect(validateAddressForNetwork(validInvoice, 'bitcoin-spark')).toBe(true);
     });
     it('returns false for empty address or network', () => {
-      assert.strictEqual(validateAddressForNetwork('', 'polygon'), false);
-      assert.strictEqual(validateAddressForNetwork(validEvmLower, ''), false);
+      expect(validateAddressForNetwork('', 'polygon')).toBe(false);
+      expect(validateAddressForNetwork(validEvmLower, '')).toBe(false);
     });
   });
 
   describe('validateAddressForNetworkDetailed', () => {
     it('returns detailed EVM result for EVM networks', () => {
-      assert.deepStrictEqual(validateAddressForNetworkDetailed(validEvmLower, 'polygon'), {
+      expect(validateAddressForNetworkDetailed(validEvmLower, 'polygon')).toEqual({
         isValid: true,
       });
-      assert.deepStrictEqual(
-        validateAddressForNetworkDetailed('0xshort', 'polygon'),
-        { isValid: false, error: 'format' }
-      );
-    });
-    it('returns format error when address or network missing', () => {
-      assert.deepStrictEqual(validateAddressForNetworkDetailed('', 'polygon'), {
+      expect(validateAddressForNetworkDetailed('0xshort', 'polygon')).toEqual({
         isValid: false,
         error: 'format',
       });
-      assert.deepStrictEqual(validateAddressForNetworkDetailed(validEvmLower, ''), {
+    });
+    it('returns format error when address or network missing', () => {
+      expect(validateAddressForNetworkDetailed('', 'polygon')).toEqual({
+        isValid: false,
+        error: 'format',
+      });
+      expect(validateAddressForNetworkDetailed(validEvmLower, '')).toEqual({
         isValid: false,
         error: 'format',
       });
     });
     it('returns isValid + error for non-EVM', () => {
       const ok = validateAddressForNetworkDetailed(validBtc, 'bitcoin');
-      assert.strictEqual(ok.isValid, true);
-      assert.strictEqual(ok.error, undefined);
-      assert.deepStrictEqual(validateAddressForNetworkDetailed('invalid', 'bitcoin'), {
+      expect(ok.isValid).toBe(true);
+      expect(ok.error).toBeUndefined();
+      expect(validateAddressForNetworkDetailed('invalid', 'bitcoin')).toEqual({
         isValid: false,
         error: 'format',
       });
@@ -89,19 +87,13 @@ describe('validateForNetwork', () => {
 
   describe('formatAddressForDisplay', () => {
     it('truncates long address with default 6...4', () => {
-      assert.strictEqual(
-        formatAddressForDisplay(validEvmLower),
-        '0x742d...f44e'
-      );
+      expect(formatAddressForDisplay(validEvmLower)).toBe('0x742d...f44e');
     });
     it('returns short address as-is', () => {
-      assert.strictEqual(formatAddressForDisplay('short'), 'short');
+      expect(formatAddressForDisplay('short')).toBe('short');
     });
     it('accepts custom start/end chars', () => {
-      assert.strictEqual(
-        formatAddressForDisplay(validEvmLower, 8, 6),
-        '0x742d35...38f44e'
-      );
+      expect(formatAddressForDisplay(validEvmLower, 8, 6)).toBe('0x742d35...38f44e');
     });
   });
 });
