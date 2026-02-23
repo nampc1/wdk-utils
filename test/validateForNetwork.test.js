@@ -9,15 +9,17 @@ const validEvmLower = '0x742d35cc6634c0532925a3b844bc454e4438f44e';
 const validBtc = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh';
 const validInvoice = 'lnbc1' + 'x'.repeat(50);
 const validLightningAddr = 'user@getalby.com';
+const validUma = '$you@uma.money';
 const validSpark = 'a'.repeat(25);
 
 describe('validateForNetwork', () => {
   describe('isNetworkLightningCapable', () => {
-    it('returns true for lightning, ln, spark, bitcoin-spark', () => {
+    it('returns true for lightning, ln, spark, bitcoin-spark, uma', () => {
       expect(isNetworkLightningCapable('lightning')).toBe(true);
       expect(isNetworkLightningCapable('ln')).toBe(true);
       expect(isNetworkLightningCapable('spark')).toBe(true);
       expect(isNetworkLightningCapable('bitcoin-spark')).toBe(true);
+      expect(isNetworkLightningCapable('uma')).toBe(true);
     });
     it('returns false for EVM or unknown', () => {
       expect(isNetworkLightningCapable('polygon')).toBe(false);
@@ -40,13 +42,20 @@ describe('validateForNetwork', () => {
     it('validates Bitcoin for bitcoin network', () => {
       expect(validateAddressForNetwork(validBtc, 'bitcoin')).toBe(true);
     });
-    it('validates Lightning invoice or address for lightning/ln', () => {
+    it('validates Lightning invoice, address, or UMA for lightning/ln', () => {
       expect(validateAddressForNetwork(validInvoice, 'lightning')).toBe(true);
       expect(validateAddressForNetwork(validLightningAddr, 'ln')).toBe(true);
+      expect(validateAddressForNetwork(validUma, 'lightning')).toBe(true);
+      expect(validateAddressForNetwork(validUma, 'ln')).toBe(true);
     });
-    it('validates Lightning or Spark for spark/bitcoin-spark', () => {
+    it('validates UMA for uma network', () => {
+      expect(validateAddressForNetwork(validUma, 'uma')).toBe(true);
+      expect(validateAddressForNetwork(validLightningAddr, 'uma')).toBe(false);
+    });
+    it('validates Lightning, UMA, or Spark for spark/bitcoin-spark', () => {
       expect(validateAddressForNetwork(validSpark, 'spark')).toBe(true);
       expect(validateAddressForNetwork(validInvoice, 'bitcoin-spark')).toBe(true);
+      expect(validateAddressForNetwork(validUma, 'spark')).toBe(true);
     });
     it('returns false for empty address or network', () => {
       expect(validateAddressForNetwork('', 'polygon')).toBe(false);

@@ -6,9 +6,10 @@ import { validateEVMAddressDetailed, isValidEVMAddress } from './evm.js';
 import { isValidBitcoinAddress } from './bitcoin.js';
 import { isValidLightningInvoice, isValidLightningAddressFormat } from './lightning.js';
 import { isValidSparkAddress } from './spark.js';
+import { isValidUmaAddress } from './uma.js';
 
 const EVM_NETWORKS = ['ethereum', 'polygon', 'arbitrum', 'sepolia', 'plasma'];
-const LIGHTNING_CAPABLE_NETWORKS = ['lightning', 'ln', 'spark', 'bitcoin-spark'];
+const LIGHTNING_CAPABLE_NETWORKS = ['lightning', 'ln', 'spark', 'bitcoin-spark', 'uma'];
 
 /**
  * True when the network supports Lightning addresses and invoices (e.g. BTC send).
@@ -37,12 +38,20 @@ export function validateAddressForNetwork(address, network, _tokenSymbol) {
     return isValidEVMAddress(trimmed);
   }
   if (net === 'lightning' || net === 'ln') {
-    return isValidLightningInvoice(trimmed) || isValidLightningAddressFormat(trimmed);
+    return (
+      isValidLightningInvoice(trimmed) ||
+      isValidLightningAddressFormat(trimmed) ||
+      isValidUmaAddress(trimmed)
+    );
+  }
+  if (net === 'uma') {
+    return isValidUmaAddress(trimmed);
   }
   if (net === 'spark' || net === 'bitcoin-spark') {
     return (
       isValidLightningInvoice(trimmed) ||
       isValidLightningAddressFormat(trimmed) ||
+      isValidUmaAddress(trimmed) ||
       isValidSparkAddress(trimmed)
     );
   }
@@ -54,6 +63,7 @@ export function validateAddressForNetwork(address, network, _tokenSymbol) {
     isValidBitcoinAddress(trimmed) ||
     isValidLightningInvoice(trimmed) ||
     isValidLightningAddressFormat(trimmed) ||
+    isValidUmaAddress(trimmed) ||
     isValidSparkAddress(trimmed)
   );
 }
