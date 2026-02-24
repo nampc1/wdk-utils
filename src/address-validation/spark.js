@@ -6,6 +6,21 @@
 import { isValidBitcoinAddress } from './bitcoin.js';
 
 /**
+ * @typedef {{ success: true } | { success: false, error: Error }} AddressValidationResult
+ */
+
+/**
+ * Validates a Spark address and returns detailed result.
+ *
+ * @param {string} address
+ * @returns {AddressValidationResult}
+ */
+export function validateSparkAddressDetailed(address) {
+  if (isValidSparkAddress(address)) return { success: true };
+  return { success: false, error: new Error('format') };
+}
+
+/**
  * Validates a Spark address.
  * Rumble: Bitcoin format OR length 20-100 and alphanumeric.
  *

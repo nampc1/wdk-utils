@@ -8,6 +8,21 @@
 const UMA_REGEX = /^\$([^\s@]+)@([^\s@]+\.[^\s@]+)$/;
 
 /**
+ * @typedef {{ success: true } | { success: false, error: Error }} AddressValidationResult
+ */
+
+/**
+ * Validates a UMA address and returns detailed result.
+ *
+ * @param {string} address
+ * @returns {AddressValidationResult}
+ */
+export function validateUmaAddressDetailed(address) {
+  if (isValidUmaAddress(address)) return { success: true };
+  return { success: false, error: new Error('format') };
+}
+
+/**
  * Validates a Universal Money Address (format: $user@domain.tld).
  *
  * @param {string} address

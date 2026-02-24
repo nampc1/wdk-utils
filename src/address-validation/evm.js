@@ -36,9 +36,7 @@ function isValidEIP55Checksum(address) {
 }
 
 /**
- * @typedef {{ isValid: true }} ValidEVM
- * @typedef {{ isValid: false; error: 'format'|'checksum' }} InvalidEVM
- * @typedef {ValidEVM|InvalidEVM} EVMAddressValidationResult
+ * @typedef {{ success: true } | { success: false, error: Error }} AddressValidationResult
  */
 
 /**
@@ -46,27 +44,27 @@ function isValidEIP55Checksum(address) {
  * If mixed case, checksum must match; all lowercase is valid.
  *
  * @param {string} address
- * @returns {EVMAddressValidationResult}
+ * @returns {AddressValidationResult}
  */
 export function validateEVMAddressDetailed(address) {
   if (!address || typeof address !== 'string') {
-    return { isValid: false, error: 'format' };
+    return { success: false, error: new Error('format') };
   }
   const trimmed = address.trim();
   if (!trimmed.startsWith('0x') || trimmed.length !== 42) {
-    return { isValid: false, error: 'format' };
+    return { success: false, error: new Error('format') };
   }
   const hexPart = trimmed.slice(2);
   if (!/^[0-9a-fA-F]{40}$/.test(hexPart)) {
-    return { isValid: false, error: 'format' };
+    return { success: false, error: new Error('format') };
   }
-  if (!isValidEIP55Checksum(trimmed)) {
-    const hasMixedCase = hexPart !== hexPart.toLowerCase();
-    if (hasMixedCase) {
-      return { isValid: false, error: 'checksum' };
-    }
+  const isAllLowercase = hexPart === hexPart.toLowerCase();
+  const isAllUppercase = hexPart === hexPart.toUpperCase();
+  const hasMixedCase = !isAllLowercase && !isAllUppercase;
+  if (hasMixedCase && !isValidEIP55Checksum(trimmed)) {
+    return { success: false, error: new Error('checksum') };
   }
-  return { isValid: true };
+  return { success: true };
 }
 
 /**
@@ -77,7 +75,7 @@ export function validateEVMAddressDetailed(address) {
  */
 export function isValidEVMAddress(address) {
   const result = validateEVMAddressDetailed(address);
-  return result.isValid;
+  return result.success;
 }
 
 /** @deprecated Use isValidEVMAddress. Format-only check (0x + 40 hex). */

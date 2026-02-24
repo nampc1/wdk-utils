@@ -1,9 +1,8 @@
 import {
+  validateLightningInvoiceDetailed,
   stripLightningPrefix,
   isValidLightningInvoice,
   isValidLightningAddressFormat,
-  isLightningInvoice,
-  isLightningAddressFormat,
 } from '../src/address-validation/lightning.js';
 
 describe('lightning', () => {
@@ -21,17 +20,31 @@ describe('lightning', () => {
     });
   });
 
-  describe('isValidLightningInvoice / isLightningInvoice', () => {
-    it('accepts lnbc with sufficient length', () => {
-      expect(isValidLightningInvoice('lnbc1' + 'x'.repeat(20))).toBe(true);
+  const validLnbc = 'lnbc1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpht0z6z';
+  const validLntb = 'lntb1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgp4m6vj4';
+  const validLnbcrt = 'lnbcrt1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgphw244f';
+  const validLni = 'lni1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpgwn9wp';
+
+  describe('validateLightningInvoiceDetailed', () => {
+    it('returns success true for valid invoice', () => {
+      expect(validateLightningInvoiceDetailed(validLnbc)).toEqual({ success: true });
+    });
+    it('returns success false with Error for invalid invoice', () => {
+      expect(validateLightningInvoiceDetailed('invalid')).toEqual({ success: false, error: new Error('format') });
+    });
+  });
+
+  describe('isValidLightningInvoice', () => {
+    it('accepts lnbc with valid checksum', () => {
+      expect(isValidLightningInvoice(validLnbc)).toBe(true);
     });
     it('accepts lntb, lnbcrt, lni', () => {
-      expect(isValidLightningInvoice('lntb1' + 'x'.repeat(20))).toBe(true);
-      expect(isValidLightningInvoice('lnbcrt1' + 'x'.repeat(20))).toBe(true);
-      expect(isValidLightningInvoice('lni1' + 'x'.repeat(20))).toBe(true);
+      expect(isValidLightningInvoice(validLntb)).toBe(true);
+      expect(isValidLightningInvoice(validLnbcrt)).toBe(true);
+      expect(isValidLightningInvoice(validLni)).toBe(true);
     });
     it('rejects too short', () => {
-      expect(isValidLightningInvoice('lnbc1short')).toBe(false);
+      expect(isValidLightningInvoice('lnbc1qyqsm94tzr')).toBe(false);
     });
     it('rejects non-invoice prefix', () => {
       expect(isValidLightningInvoice('lnxx1' + 'x'.repeat(20))).toBe(false);
@@ -39,15 +52,15 @@ describe('lightning', () => {
     it('rejects without ln', () => {
       expect(isValidLightningInvoice('bc1' + 'x'.repeat(20))).toBe(false);
     });
-    it('strips lightning: before validating', () => {
-      expect(isValidLightningInvoice('lightning:lnbc1' + 'x'.repeat(20))).toBe(true);
+    it('rejects invalid checksum', () => {
+      expect(isValidLightningInvoice('lnbc1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpht0z6q')).toBe(false);
     });
-    it('alias isLightningInvoice matches', () => {
-      expect(isLightningInvoice('lnbc1' + 'x'.repeat(20))).toBe(true);
+    it('strips lightning: before validating', () => {
+      expect(isValidLightningInvoice('lightning:' + validLnbc)).toBe(true);
     });
   });
 
-  describe('isValidLightningAddressFormat / isLightningAddressFormat', () => {
+  describe('isValidLightningAddressFormat', () => {
     it('accepts email with dot in domain', () => {
       expect(isValidLightningAddressFormat('user@getalby.com')).toBe(true);
       expect(isValidLightningAddressFormat('u@a.co')).toBe(true);
@@ -59,9 +72,6 @@ describe('lightning', () => {
       expect(isValidLightningAddressFormat('notanemail')).toBe(false);
       expect(isValidLightningAddressFormat('@domain.com')).toBe(false);
       expect(isValidLightningAddressFormat('user@')).toBe(false);
-    });
-    it('alias isLightningAddressFormat matches', () => {
-      expect(isLightningAddressFormat('u@a.co')).toBe(true);
     });
   });
 });

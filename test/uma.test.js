@@ -1,4 +1,5 @@
 import {
+  validateUmaAddressDetailed,
   isValidUmaAddress,
   isUmaAddress,
   resolveUmaUsername,
@@ -7,6 +8,15 @@ import {
 describe('uma', () => {
   const validUma = '$you@uma.money';
   const validUma2 = '$alice@wallet.com';
+
+  describe('validateUmaAddressDetailed', () => {
+    it('returns success true for valid UMA', () => {
+      expect(validateUmaAddressDetailed(validUma)).toEqual({ success: true });
+    });
+    it('returns success false with Error for invalid UMA', () => {
+      expect(validateUmaAddressDetailed('invalid')).toEqual({ success: false, error: new Error('format') });
+    });
+  });
 
   describe('isValidUmaAddress', () => {
     it('accepts valid UMA ($user@domain.tld)', () => {

@@ -1,8 +1,17 @@
-import { isValidSparkAddress, isSparkAddress } from '../src/address-validation/spark.js';
+import { validateSparkAddressDetailed, isValidSparkAddress, isSparkAddress } from '../src/address-validation/spark.js';
 
 describe('spark', () => {
   const validBtc = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh';
   const validAlphanumeric = 'a'.repeat(25);
+
+  describe('validateSparkAddressDetailed', () => {
+    it('returns success true for valid address', () => {
+      expect(validateSparkAddressDetailed(validAlphanumeric)).toEqual({ success: true });
+    });
+    it('returns success false with Error for invalid address', () => {
+      expect(validateSparkAddressDetailed('bad!')).toEqual({ success: false, error: new Error('format') });
+    });
+  });
 
   describe('isValidSparkAddress / isSparkAddress', () => {
     it('accepts Bitcoin-like address', () => {
