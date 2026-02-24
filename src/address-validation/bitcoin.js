@@ -1,4 +1,4 @@
-import { createBase58check, bech32 } from '@scure/base';
+import { createBase58check, bech32, bech32m } from '@scure/base';
 import { sha256 } from '@noble/hashes/sha256';
 
 /**
@@ -84,7 +84,12 @@ export function isBech32(address) {
   try {
     const { prefix } = bech32.decode(t);
     return prefix === 'bc';
-  } catch {
-    return false;
-  }
+  } catch {}
+
+  try {
+    const { prefix } = bech32m.decode(t);
+    return prefix === 'bc';
+  } catch {}
+
+  return false;
 }

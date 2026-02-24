@@ -10,6 +10,7 @@ describe('bitcoin', () => {
   const validP2PKH = '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2';
   const validP2SH = '3QJmV3qfvL9SuYo34YihAf3sRCW3qSinyC';
   const validBech32 = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh';
+  const validTaproot = 'bc1pqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsyjer9e';
 
   describe('validateBitcoinAddressDetailed', () => {
     it('returns success true for valid address', () => {
@@ -27,8 +28,11 @@ describe('bitcoin', () => {
     it('accepts P2SH (3...)', () => {
       expect(isValidBitcoinAddress(validP2SH)).toBe(true);
     });
-    it('accepts Bech32 (bc1...)', () => {
+    it('accepts Bech32 (bc1q...)', () => {
       expect(isValidBitcoinAddress(validBech32)).toBe(true);
+    });
+    it('accepts Taproot (bc1p...)', () => {
+      expect(isValidBitcoinAddress(validTaproot)).toBe(true);
     });
     it('rejects too short P2PKH', () => {
       expect(isValidBitcoinAddress('1' + 'a'.repeat(24))).toBe(false);
@@ -72,13 +76,16 @@ describe('bitcoin', () => {
   });
 
   describe('isBech32', () => {
-    it('returns true for valid bc1', () => {
+    it('returns true for valid bc1q (SegWit v0)', () => {
       expect(isBech32(validBech32)).toBe(true);
+    });
+    it('returns true for valid bc1p (Taproot)', () => {
+      expect(isBech32(validTaproot)).toBe(true);
     });
     it('returns false for P2PKH', () => {
       expect(isBech32(validP2PKH)).toBe(false);
     });
-    it('rejects Bech32 with invalid checksum', () => {
+    it('rejects invalid checksum', () => {
       expect(isBech32('bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlq')).toBe(false);
     });
   });
