@@ -1,7 +1,5 @@
 import {
-  validateUmaAddressDetailed,
-  isValidUmaAddress,
-  isUmaAddress,
+  validateUmaAddress,
   resolveUmaUsername,
 } from '../src/address-validation/uma.js';
 
@@ -9,40 +7,26 @@ describe('uma', () => {
   const validUma = '$you@uma.money';
   const validUma2 = '$alice@wallet.com';
 
-  describe('validateUmaAddressDetailed', () => {
-    it('returns success true for valid UMA', () => {
-      expect(validateUmaAddressDetailed(validUma)).toEqual({ success: true });
+  describe('validateUmaAddress', () => {
+    it('returns success with type uma for valid UMA', () => {
+      expect(validateUmaAddress(validUma)).toEqual({ success: true, type: 'uma' });
     });
-    it('returns success false with Error for invalid UMA', () => {
-      expect(validateUmaAddressDetailed('invalid')).toEqual({ success: false, error: new Error('format') });
+    it('accepts other valid UMA formats', () => {
+      expect(validateUmaAddress(validUma2)).toEqual({ success: true, type: 'uma' });
+      expect(validateUmaAddress('$x@a.co')).toEqual({ success: true, type: 'uma' });
     });
-  });
-
-  describe('isValidUmaAddress', () => {
-    it('accepts valid UMA ($user@domain.tld)', () => {
-      expect(isValidUmaAddress(validUma)).toBe(true);
-      expect(isValidUmaAddress(validUma2)).toBe(true);
-      expect(isValidUmaAddress('$x@a.co')).toBe(true);
+    it('returns INVALID_FORMAT for missing $', () => {
+      expect(validateUmaAddress('you@uma.money')).toEqual({ success: false, reason: 'INVALID_FORMAT' });
     });
-    it('rejects missing $', () => {
-      expect(isValidUmaAddress('you@uma.money')).toBe(false);
-    });
-    it('rejects invalid format', () => {
-      expect(isValidUmaAddress('$no-at-sign')).toBe(false);
-      expect(isValidUmaAddress('$@domain.com')).toBe(false);
-      expect(isValidUmaAddress('$user@nodot')).toBe(false);
-      expect(isValidUmaAddress('')).toBe(false);
-      expect(isValidUmaAddress(null)).toBe(false);
+    it('returns INVALID_FORMAT for invalid format', () => {
+      expect(validateUmaAddress('$no-at-sign')).toEqual({ success: false, reason: 'INVALID_FORMAT' });
+      expect(validateUmaAddress('$@domain.com')).toEqual({ success: false, reason: 'INVALID_FORMAT' });
+      expect(validateUmaAddress('$user@nodot')).toEqual({ success: false, reason: 'INVALID_FORMAT' });
+      expect(validateUmaAddress('')).toEqual({ success: false, reason: 'INVALID_FORMAT' });
+      expect(validateUmaAddress(null)).toEqual({ success: false, reason: 'INVALID_FORMAT' });
     });
     it('trims input', () => {
-      expect(isValidUmaAddress('  ' + validUma + '  ')).toBe(true);
-    });
-  });
-
-  describe('isUmaAddress', () => {
-    it('is alias for isValidUmaAddress', () => {
-      expect(isUmaAddress(validUma)).toBe(true);
-      expect(isUmaAddress('you@uma.money')).toBe(false);
+      expect(validateUmaAddress('  ' + validUma + '  ')).toEqual({ success: true, type: 'uma' });
     });
   });
 

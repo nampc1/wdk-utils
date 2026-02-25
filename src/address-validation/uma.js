@@ -8,34 +8,25 @@
 const UMA_REGEX = /^\$([^\s@]+)@([^\s@]+\.[^\s@]+)$/;
 
 /**
- * @typedef {{ success: true } | { success: false, error: Error }} AddressValidationResult
+ * @typedef {{ success: true, type: 'uma' }} UmaAddressValidationSuccess
+ * @typedef {{ success: false, reason: string }} UmaAddressValidationFailure
+ * @typedef {UmaAddressValidationSuccess | UmaAddressValidationFailure} UmaAddressValidationResult
  */
-
-/**
- * Validates a UMA address and returns detailed result.
- *
- * @param {string} address
- * @returns {AddressValidationResult}
- */
-export function validateUmaAddressDetailed(address) {
-  if (isValidUmaAddress(address)) return { success: true };
-  return { success: false, error: new Error('format') };
-}
 
 /**
  * Validates a Universal Money Address (format: $user@domain.tld).
  *
- * @param {string} address
- * @returns {boolean}
+ * @param {string} address The address to validate.
+ * @returns {UmaAddressValidationResult}
  */
-export function isValidUmaAddress(address) {
-  if (!address || typeof address !== 'string') return false;
-  return UMA_REGEX.test(address.trim());
-}
-
-/** Alias for isValidUmaAddress. */
-export function isUmaAddress(address) {
-  return isValidUmaAddress(address);
+export function validateUmaAddress(address) {
+  if (!address || typeof address !== 'string') {
+    return { success: false, reason: 'INVALID_FORMAT' };
+  }
+  if (UMA_REGEX.test(address.trim())) {
+    return { success: true, type: 'uma' };
+  }
+  return { success: false, reason: 'INVALID_FORMAT' };
 }
 
 /**

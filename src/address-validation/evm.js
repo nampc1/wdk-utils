@@ -36,57 +36,35 @@ function isValidEIP55Checksum(address) {
 }
 
 /**
- * @typedef {{ success: true } | { success: false, error: Error }} AddressValidationResult
+ * @typedef {{ success: true, type: 'evm' }} EvmAddressValidationSuccess
+ * @typedef {{ success: false, reason: string }} EvmAddressValidationFailure
+ * @typedef {EvmAddressValidationSuccess | EvmAddressValidationFailure} EvmAddressValidationResult
  */
 
 /**
- * Validates an EVM address and returns detailed result (format + optional EIP-55 checksum).
- * If mixed case, checksum must match; all lowercase is valid.
+ * Validates an EVM address (format + optional EIP-55 checksum).
+ * If mixed case, checksum must match; all lowercase or all uppercase is valid.
  *
- * @param {string} address
- * @returns {AddressValidationResult}
+ * @param {string} address The address to validate.
+ * @returns {EvmAddressValidationResult}
  */
-export function validateEVMAddressDetailed(address) {
+export function validateEVMAddress(address) {
   if (!address || typeof address !== 'string') {
-    return { success: false, error: new Error('format') };
+    return { success: false, reason: 'INVALID_FORMAT' };
   }
   const trimmed = address.trim();
   if (!trimmed.startsWith('0x') || trimmed.length !== 42) {
-    return { success: false, error: new Error('format') };
+    return { success: false, reason: 'INVALID_FORMAT' };
   }
   const hexPart = trimmed.slice(2);
   if (!/^[0-9a-fA-F]{40}$/.test(hexPart)) {
-    return { success: false, error: new Error('format') };
+    return { success: false, reason: 'INVALID_FORMAT' };
   }
   const isAllLowercase = hexPart === hexPart.toLowerCase();
   const isAllUppercase = hexPart === hexPart.toUpperCase();
   const hasMixedCase = !isAllLowercase && !isAllUppercase;
   if (hasMixedCase && !isValidEIP55Checksum(trimmed)) {
-    return { success: false, error: new Error('checksum') };
+    return { success: false, reason: 'INVALID_CHECKSUM' };
   }
-  return { success: true };
-}
-
-/**
- * Validates an EVM address (Ethereum, Polygon, Arbitrum, etc.).
- *
- * @param {string} address
- * @returns {boolean}
- */
-export function isValidEVMAddress(address) {
-  const result = validateEVMAddressDetailed(address);
-  return result.success;
-}
-
-/** @deprecated Use isValidEVMAddress. Format-only check (0x + 40 hex). */
-export function isEvmAddress(address) {
-  return typeof address === 'string' && /^0x[0-9a-fA-F]{40}$/.test(address.trim());
-}
-
-/** @deprecated Use validateEVMAddressDetailed for checksum. All-lowercase passes; mixed case requires valid EIP-55. */
-export function isEip55Checksum(address) {
-  if (!address || typeof address !== 'string') return false;
-  const t = address.trim();
-  if (!/^0x[0-9a-fA-F]{40}$/.test(t)) return false;
-  return isValidEIP55Checksum(t);
+  return { success: true, type: 'evm' };
 }

@@ -3,41 +3,34 @@
  * Accepts: Bitcoin-like address OR alphanumeric string 20-100 chars.
  */
 
-import { isValidBitcoinAddress } from './bitcoin.js';
+import { validateBitcoinAddress } from './bitcoin.js';
 
 /**
- * @typedef {{ success: true } | { success: false, error: Error }} AddressValidationResult
+ * @typedef {{ success: true, type: 'btc' | 'alphanumeric' }} SparkAddressValidationSuccess
+ * @typedef {{ success: false, reason: string }} SparkAddressValidationFailure
+ * @typedef {SparkAddressValidationSuccess | SparkAddressValidationFailure} SparkAddressValidationResult
  */
-
-/**
- * Validates a Spark address and returns detailed result.
- *
- * @param {string} address
- * @returns {AddressValidationResult}
- */
-export function validateSparkAddressDetailed(address) {
-  if (isValidSparkAddress(address)) return { success: true };
-  return { success: false, error: new Error('format') };
-}
 
 /**
  * Validates a Spark address.
- * Rumble: Bitcoin format OR length 20-100 and alphanumeric.
+ * Accepts Bitcoin format or alphanumeric string (20-100 chars).
  *
- * @param {string} address
- * @returns {boolean}
+ * @param {string} address The address to validate.
+ * @returns {SparkAddressValidationResult}
  */
-export function isValidSparkAddress(address) {
-  if (!address || typeof address !== 'string') return false;
-  const trimmed = address.trim();
-  if (isValidBitcoinAddress(trimmed)) return true;
-  if (trimmed.length >= 20 && trimmed.length <= 100) {
-    return /^[a-zA-Z0-9]+$/.test(trimmed);
+export function validateSparkAddress(address) {
+  if (!address || typeof address !== 'string') {
+    return { success: false, reason: 'INVALID_FORMAT' };
   }
-  return false;
-}
-
-/** Alias for isValidSparkAddress. */
-export function isSparkAddress(address) {
-  return isValidSparkAddress(address);
+  const trimmed = address.trim();
+  if (trimmed.length === 0) {
+    return { success: false, reason: 'EMPTY_ADDRESS' };
+  }
+  if (validateBitcoinAddress(trimmed).success) {
+    return { success: true, type: 'btc' };
+  }
+  if (trimmed.length >= 20 && trimmed.length <= 100 && /^[a-zA-Z0-9]+$/.test(trimmed)) {
+    return { success: true, type: 'alphanumeric' };
+  }
+  return { success: false, reason: 'INVALID_FORMAT' };
 }
