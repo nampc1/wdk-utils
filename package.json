@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Utilities for Wallet Development Kit",
   "main": "src/index.js",
+  "types": "src/index.d.ts",
   "type": "module",
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
