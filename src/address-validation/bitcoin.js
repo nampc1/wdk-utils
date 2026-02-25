@@ -1,95 +1,120 @@
 import { createBase58check, bech32, bech32m } from '@scure/base';
-import { sha256 } from '@noble/hashes/sha256';
+import { sha256 } from '@noble/hashes/sha2';
 
 /**
- * Bitcoin address validation (aligned with Rumble).
+ * Bitcoin address validation.
  * Validates format, checksum, and version byte.
  */
 
 const base58check = createBase58check(sha256);
 
 /**
- * @typedef {{ success: true } | { success: false, error: Error }} AddressValidationResult
+ * @typedef {{ success: true, type: 'p2pkh' | 'p2sh' | 'bech32' }} BtcAddressValidationSuccess
+ * @typedef {{ success: false, reason: string }} BtcAddressValidationFailure
+ * @typedef {BtcAddressValidationSuccess | BtcAddressValidationFailure} BtcAddressValidationResult
  */
 
 /**
- * Validates a Bitcoin address and returns detailed result.
- * Supports: P2PKH (1...), P2SH (3...), Bech32 (bc1...).
- *
- * @param {string} address
- * @returns {AddressValidationResult}
+ * Validates a P2PKH address.
+ * Assumes the address starts with '1'.
+ * @param {string} address The address to validate.
+ * @returns {BtcAddressValidationResult}
  */
-export function validateBitcoinAddressDetailed(address) {
-  if (isValidBitcoinAddress(address)) return { success: true };
-  return { success: false, error: new Error('format') };
-}
-
-/**
- * Validates a Bitcoin address.
- * Supports: P2PKH (1...), P2SH (3...), Bech32 (bc1...).
- *
- * @param {string} address
- * @returns {boolean}
- */
-export function isValidBitcoinAddress(address) {
-  return isP2PKH(address) || isP2SH(address) || isBech32(address);
-}
-
-/**
- * P2SH format (starts with 3, 26-35 base58 chars).
- * @param {string} address
- * @returns {boolean}
- */
-export function isP2SH(address) {
-  if (!address || typeof address !== 'string') return false;
-  const t = address.trim();
-  if (!t.startsWith('3') || t.length < 26 || t.length > 35) return false;
-
+export function validateP2PKH(address) {
+  if (address.length < 26 || address.length > 35) {
+    return { success: false, reason: 'INVALID_LENGTH' };
+  }
   try {
-    const decoded = base58check.decode(t);
-    return decoded[0] === 0x05;
+    const decoded = base58check.decode(address);
+    if (decoded[0] === 0x00) {
+      return { success: true, type: 'p2pkh' };
+    } else {
+      return { success: false, reason: 'INVALID_VERSION_BYTE' };
+    }
   } catch {
-    return false;
+    return { success: false, reason: 'INVALID_CHECKSUM' };
   }
 }
 
 /**
- * P2PKH format (starts with 1, 26-35 base58 chars).
- * @param {string} address
- * @returns {boolean}
+ * Validates a P2SH address.
+ * Assumes the address starts with '3'.
+ * @param {string} address The address to validate.
+ * @returns {BtcAddressValidationResult}
  */
-export function isP2PKH(address) {
-  if (!address || typeof address !== 'string') return false;
-  const t = address.trim();
-  if (!t.startsWith('1') || t.length < 26 || t.length > 35) return false;
-
+export function validateP2SH(address) {
+  if (address.length < 26 || address.length > 35) {
+    return { success: false, reason: 'INVALID_LENGTH' };
+  }
   try {
-    const decoded = base58check.decode(t);
-    return decoded[0] === 0x00;
+    const decoded = base58check.decode(address);
+    if (decoded[0] === 0x05) {
+      return { success: true, type: 'p2sh' };
+    } else {
+      return { success: false, reason: 'INVALID_VERSION_BYTE' };
+    }
   } catch {
-    return false;
+    return { success: false, reason: 'INVALID_CHECKSUM' };
   }
 }
 
 /**
- * Bech32 format (bc1..., 14-74 chars).
- * @param {string} address
- * @returns {boolean}
+ * Validates a Bech32 or Bech32m address.
+ * Assumes the address starts with 'bc1' (case-insensitive).
+ * @param {string} address The address to validate.
+ * @returns {BtcAddressValidationResult}
  */
-export function isBech32(address) {
-  if (!address || typeof address !== 'string') return false;
-  const t = address.trim().toLowerCase();
-  if (!t.startsWith('bc1')) return false;
+export function validateBech32(address) {
+  const lower = address.toLowerCase();
+  const upper = address.toUpperCase();
+  if (address !== lower && address !== upper) {
+    return { success: false, reason: 'MIXED_CASE' };
+  }
 
+  let decoded;
   try {
-    const { prefix } = bech32.decode(t);
-    return prefix === 'bc';
-  } catch {}
+    decoded = bech32.decode(lower);
+  } catch (e) {
+    try {
+      decoded = bech32m.decode(lower);
+    } catch (e2) {
+      return { success: false, reason: 'INVALID_BECH32_FORMAT' };
+    }
+  }
 
-  try {
-    const { prefix } = bech32m.decode(t);
-    return prefix === 'bc';
-  } catch {}
+  if (decoded.prefix === 'bc') {
+    return { success: true, type: 'bech32' };
+  } else {
+    return { success: false, reason: 'INVALID_HRP' };
+  }
+}
 
-  return false;
+/**
+ * Validates a Bitcoin address and returns a detailed result.
+ * Supports: P2PKH (1...), P2SH (3...), Bech32 (bc1...).
+ *
+ * @param {string} address
+ * @returns {BtcAddressValidationResult}
+ */
+export function validateBitcoinAddress(address) {
+  if (!address || typeof address !== 'string') {
+    return { success: false, reason: 'INVALID_FORMAT' };
+  }
+  const t = address.trim();
+
+  if (t.length === 0) {
+    return { success: false, reason: 'EMPTY_ADDRESS' };
+  }
+
+  if (t.toLowerCase().startsWith('bc1')) {
+    return validateBech32(t);
+  }
+  if (t.startsWith('1')) {
+    return validateP2PKH(t);
+  }
+  if (t.startsWith('3')) {
+    return validateP2SH(t);
+  }
+
+  return { success: false, reason: 'UNKNOWN_PREFIX' };
 }

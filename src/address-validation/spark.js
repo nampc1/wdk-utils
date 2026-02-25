@@ -1,5 +1,5 @@
 /**
- * Spark address validation (aligned with Rumble).
+ * Spark address validation.
  * Accepts: Bitcoin-like address OR alphanumeric string 20-100 chars.
  */
 

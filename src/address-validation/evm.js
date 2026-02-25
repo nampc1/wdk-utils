@@ -1,5 +1,5 @@
 /**
- * EVM address validation (aligned with Rumble addressValidation).
+ * EVM address validation.
  * EIP-55 checksum: if all lowercase, valid; if mixed case, must match checksum.
  * @see https://eips.ethereum.org/EIPS/eip-55
  */
