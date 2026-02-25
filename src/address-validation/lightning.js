@@ -1,11 +1,84 @@
+/**
+ * Lightning validation.
+ * Invoice prefixes: lnbc, lntb, lnbcrt, lni.
+ * Lightning address: strict email (user@domain.tld).
+ */
+
+import { bech32 } from '@scure/base';
+
+const VALID_INVOICE_PREFIXES = ['lnbc', 'lntb', 'lnbcrt', 'lni'];
+/** Lightning address: must have dot in domain (user@domain.tld) */
+const LIGHTNING_ADDRESS_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Strips "lightning:" URI prefix (case-insensitive). Does not trim after slice.
+ *
+ * @param {string} input
+ * @returns {string}
+ */
 export function stripLightningPrefix(input) {
-  throw new Error('Not implemented');
+  if (!input || typeof input !== 'string') return input;
+  const trimmed = input.trim();
+  const lower = trimmed.toLowerCase();
+  if (lower.startsWith('lightning:')) {
+    return trimmed.slice(10);
+  }
+  return trimmed;
 }
 
-export function isLightningInvoice(address) {
-  throw new Error('Not implemented');
+/**
+ * @typedef {{ success: true, type: 'invoice' }} LightningInvoiceValidationSuccess
+ * @typedef {{ success: false, reason: string }} LightningInvoiceValidationFailure
+ * @typedef {LightningInvoiceValidationSuccess | LightningInvoiceValidationFailure} LightningInvoiceValidationResult
+ */
+
+/**
+ * Validates a Lightning Network invoice (lnbc, lntb, lnbcrt, lni; length >= 20).
+ *
+ * @param {string} address The invoice to validate.
+ * @returns {LightningInvoiceValidationResult}
+ */
+export function validateLightningInvoice(address) {
+  if (!address || typeof address !== 'string') {
+    return { success: false, reason: 'INVALID_FORMAT' };
+  }
+  const invoice = stripLightningPrefix(address);
+  const hasValidPrefix = VALID_INVOICE_PREFIXES.some((prefix) =>
+    invoice.toLowerCase().startsWith(prefix.toLowerCase())
+  );
+  if (!hasValidPrefix) {
+    return { success: false, reason: 'INVALID_PREFIX' };
+  }
+  if (invoice.length < 20) {
+    return { success: false, reason: 'INVALID_LENGTH' };
+  }
+  try {
+    bech32.decode(invoice.toLowerCase(), false);
+    return { success: true, type: 'invoice' };
+  } catch {
+    return { success: false, reason: 'INVALID_CHECKSUM' };
+  }
 }
 
-export function isLightningAddressFormat(address) {
-  throw new Error('Not implemented');
+/**
+ * @typedef {{ success: true, type: 'address' }} LightningAddressValidationSuccess
+ * @typedef {{ success: false, reason: string }} LightningAddressValidationFailure
+ * @typedef {LightningAddressValidationSuccess | LightningAddressValidationFailure} LightningAddressValidationResult
+ */
+
+/**
+ * Validates Lightning Address format (email: user@domain.tld).
+ *
+ * @param {string} address The address to validate.
+ * @returns {LightningAddressValidationResult}
+ */
+export function validateLightningAddress(address) {
+  if (!address || typeof address !== 'string') {
+    return { success: false, reason: 'INVALID_FORMAT' };
+  }
+  const trimmed = address.trim().toLowerCase();
+  if (LIGHTNING_ADDRESS_EMAIL_REGEX.test(trimmed)) {
+    return { success: true, type: 'address' };
+  }
+  return { success: false, reason: 'INVALID_FORMAT' };
 }

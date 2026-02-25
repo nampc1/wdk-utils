@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "keywords": [
     "wdk",
@@ -13,5 +13,12 @@
     "wallet"
   ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@noble/hashes": "^1.4.0",
+    "@scure/base": "^2.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
 }
