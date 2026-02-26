@@ -1,24 +1,51 @@
 {
-  "name": "wdk-utils",
+  "name": "@tetherto/wdk-utils",
   "version": "0.1.0",
   "description": "Utilities for Wallet Development Kit",
-  "main": "src/index.js",
-  "type": "module",
-  "scripts": {
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
-  },
   "keywords": [
     "wdk",
     "tether",
     "wallet"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Tether",
+  "license": "Apache-2.0",
+  "main": "index.js",
+  "types": "./types",
+  "type": "module",
+  "scripts": {
+    "build:types": "tsc",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "lint": "standard",
+    "lint:fix": "standard --fix"
+  },
   "dependencies": {
     "@noble/hashes": "^1.4.0",
-    "@scure/base": "^2.0.0"
+    "@scure/base": "^2.0.0",
+    "bare-node-runtime": "^1.1.4"
   },
   "devDependencies": {
-    "jest": "^29.7.0"
+    "jest": "^29.7.0",
+    "standard": "17.1.2",
+    "typescript": "5.8.3"
+  },
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "bare": "./bare.js",
+      "default": "./index.js"
+    },
+    "./package": {
+      "default": "./package.json"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "standard": {
+    "ignore": [
+      "bare.js",
+      "tests/**/*.js"
+    ]
   }
 }
