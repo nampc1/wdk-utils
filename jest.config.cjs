@@ -2,5 +2,5 @@
 module.exports = {
   testEnvironment: 'node',
   testMatch: ['**/test/**/*.test.js'],
-  watchman: false,
-};
+  watchman: false
+}
