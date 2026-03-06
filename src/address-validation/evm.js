@@ -19,6 +19,7 @@
  * @see https://eips.ethereum.org/EIPS/eip-55
  */
 
+// eslint-disable-next-line camelcase
 import { keccak_256 } from '@noble/hashes/sha3'
 
 function isValidEIP55Checksum (address) {
