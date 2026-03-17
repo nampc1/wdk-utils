@@ -14,7 +14,7 @@
 'use strict'
 
 import { bech32m } from '@scure/base'
-import { validateBitcoinAddress } from './bitcoin.js'
+import { validateBech32m } from './bitcoin.js'
 
 /**
  * @typedef {{ success: true, type: 'spark' | 'btc' }} SparkAddressValidationSuccess
@@ -52,7 +52,7 @@ export function validateSparkAddress (address) {
   try {
     decoded = bech32m.decode(lower)
   } catch (e) {
-    if (validateBitcoinAddress(trimmed).success) {
+    if (validateBech32m(trimmed).success) {
       return { success: true, type: 'btc' }
     }
 
@@ -63,7 +63,7 @@ export function validateSparkAddress (address) {
     return { success: true, type: 'spark' }
   }
 
-  if (validateBitcoinAddress(trimmed).success) {
+  if (validateBech32m(trimmed).success) {
     return { success: true, type: 'btc' }
   }
 
