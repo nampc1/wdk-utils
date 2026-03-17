@@ -65,10 +65,14 @@ function isValidEIP55Checksum (address) {
  * @returns {EvmAddressValidationResult}
  */
 export function validateEVMAddress (address) {
-  if (!address || typeof address !== 'string') {
+  if (address == null || typeof address !== 'string') {
     return { success: false, reason: 'INVALID_FORMAT' }
   }
   const trimmed = address.trim()
+  if (trimmed.length === 0) {
+    return { success: false, reason: 'EMPTY_ADDRESS' }
+  }
+
   if (!trimmed.startsWith('0x') || trimmed.length !== 42) {
     return { success: false, reason: 'INVALID_FORMAT' }
   }

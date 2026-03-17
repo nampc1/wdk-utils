@@ -18,118 +18,232 @@ import { sha256 } from '@noble/hashes/sha2'
 
 /**
  * Bitcoin address validation.
- * Validates format, checksum, and version byte.
+ * Validates format and checksum for mainnet and testnet addresses.
+ * Supports P2PKH, P2SH, SegWit v0 (Bech32), and SegWit v1+ (Bech32m).
  */
 
 const base58check = createBase58check(sha256)
 
+const NETWORKS = {
+  mainnet: {
+    bech32: 'bc',
+    p2pkh: 0x00,
+    p2sh: 0x05
+  },
+  testnet: {
+    bech32: 'tb',
+    p2pkh: 0x6f,
+    p2sh: 0xc4
+  },
+  regtest: {
+    bech32: 'bcrt'
+    // Regtest uses testnet Base58 version bytes
+  }
+}
+
+const WITNESS_VERSION_BECH32 = 0
+
 /**
- * @typedef {{ success: true, type: 'p2pkh' | 'p2sh' | 'bech32' }} BtcAddressValidationSuccess
+ * @typedef {{ success: true, type: 'p2pkh' | 'p2sh' | 'bech32' | 'bech32m', network: 'mainnet' | 'testnet' | 'regtest' }} BtcAddressValidationSuccess
  * @typedef {{ success: false, reason: string }} BtcAddressValidationFailure
  * @typedef {BtcAddressValidationSuccess | BtcAddressValidationFailure} BtcAddressValidationResult
  */
 
 /**
- * Validates a P2PKH address.
- * Assumes the address starts with '1'.
- * @param {string} address The address to validate.
- * @returns {BtcAddressValidationResult}
+ * Decodes a Base58Check address and validates its payload length.
+ * Returns decoded bytes or a failure result.
+ * @param {string} address
+ * @returns {{ decoded: Uint8Array } | BtcAddressValidationFailure}
  */
-export function validateP2PKH (address) {
-  if (address.length < 26 || address.length > 35) {
+function _decodeBase58(address) {
+  let decoded
+
+  try {
+    decoded = base58check.decode(address)
+  } catch (e) {
+    const msg = e && e.message ? e.message.toLowerCase() : ''
+
+    if (msg.includes('checksum')) {
+      return { success: false, reason: 'INVALID_CHECKSUM' }
+    }
+
+    return { success: false, reason: 'INVALID_FORMAT' }
+  }
+
+  if (decoded.length !== 21) {
     return { success: false, reason: 'INVALID_LENGTH' }
   }
-  try {
-    const decoded = base58check.decode(address)
-    if (decoded[0] === 0x00) {
-      return { success: true, type: 'p2pkh' }
-    } else {
-      return { success: false, reason: 'INVALID_VERSION_BYTE' }
-    }
-  } catch {
-    return { success: false, reason: 'INVALID_CHECKSUM' }
-  }
+
+  return { decoded }
 }
 
 /**
- * Validates a P2SH address.
- * Assumes the address starts with '3'.
- * @param {string} address The address to validate.
+ * Validates a P2PKH address for any supported network.
+ * @param {Uint8Array} decoded - The decoded address
  * @returns {BtcAddressValidationResult}
  */
-export function validateP2SH (address) {
-  if (address.length < 26 || address.length > 35) {
-    return { success: false, reason: 'INVALID_LENGTH' }
+export function _validateP2PKH (decoded) {
+  const version = decoded[0]
+  if (version === NETWORKS.mainnet.p2pkh) {
+    return { success: true, type: 'p2pkh', network: 'mainnet' }
   }
-  try {
-    const decoded = base58check.decode(address)
-    if (decoded[0] === 0x05) {
-      return { success: true, type: 'p2sh' }
-    } else {
-      return { success: false, reason: 'INVALID_VERSION_BYTE' }
-    }
-  } catch {
-    return { success: false, reason: 'INVALID_CHECKSUM' }
+  if (version === NETWORKS.testnet.p2pkh) {
+    return { success: true, type: 'p2pkh', network: 'testnet' }
   }
+
+  return { success: false, reason: 'INVALID_VERSION_BYTE' }
 }
 
 /**
- * Validates a Bech32 or Bech32m address.
- * Assumes the address starts with 'bc1' (case-insensitive).
- * @param {string} address The address to validate.
+ * Validates a P2SH address for any supported network.
+ * @param {Uint8Array} decoded - The decoded address
+ * @returns {BtcAddressValidationResult}
+ */
+function _validateP2SH (decoded) {
+  const version = decoded[0]
+
+  if (version === NETWORKS.mainnet.p2sh) {
+    return { success: true, type: 'p2sh', network: 'mainnet' }
+  }
+
+  if (version === NETWORKS.testnet.p2sh) {
+    return { success: true, type: 'p2sh', network: 'testnet' }
+  }
+
+  return { success: false, reason: 'INVALID_VERSION_BYTE' }
+}
+
+export function validateBase58(address) {
+  const result = _decodeBase58(address)
+  if (!result.decoded) return result
+  
+  const validateP2pkh = _validateP2PKH(result.decoded)
+  if (validateP2pkh.success) {
+    return validateP2pkh
+  }
+  
+  const validateP2sh = _validateP2SH(result.decoded)
+  if (validateP2sh.success) {
+    return validateP2sh
+  }
+  
+  return { success: false, reason: 'INVALID_VERSION_BYTE' }
+}
+
+/**
+ * Validates a Bech32 address for any supported network.
+ * @param {string} address - The address to validate.
  * @returns {BtcAddressValidationResult}
  */
 export function validateBech32 (address) {
-  const lower = address.toLowerCase()
-  const upper = address.toUpperCase()
-  if (address !== lower && address !== upper) {
-    return { success: false, reason: 'MIXED_CASE' }
-  }
-
-  let decoded
   try {
-    decoded = bech32.decode(lower)
-  } catch (e) {
-    try {
-      decoded = bech32m.decode(lower)
-    } catch (e2) {
-      return { success: false, reason: 'INVALID_BECH32_FORMAT' }
-    }
-  }
+    const decoded = bech32.decode(address)
+    const { words } = decoded
 
-  if (decoded.prefix === 'bc') {
-    return { success: true, type: 'bech32' }
-  } else {
+    if (words[0] !== WITNESS_VERSION_BECH32) {
+      return { success: false, reason: 'INVALID_WITNESS_VERSION' }
+    }
+
+    const programBytes = bech32.fromWords(words.slice(1))
+    if (programBytes.length !== 20 && programBytes.length !== 32) {
+      return { success: false, reason: 'INVALID_LENGTH' }
+    }
+
+    const prefix = address.toLowerCase().substring(0, address.lastIndexOf('1'))
+    if (prefix === NETWORKS.mainnet.bech32) return { success: true, type: 'bech32', network: 'mainnet' }
+    if (prefix === NETWORKS.testnet.bech32) return { success: true, type: 'bech32', network: 'testnet' }
+    // Note: Regtest addresses are Bech32m, not Bech32. This validator will correctly fail them.
+
     return { success: false, reason: 'INVALID_HRP' }
+  } catch (e) {
+    if (e && e.message && e.message.toLowerCase().includes('lowercase or uppercase')) {
+      return { success: false, reason: 'MIXED_CASE' }
+    }
+    return { success: false, reason: 'INVALID_BECH32_FORMAT' }
   }
 }
 
 /**
- * Validates a Bitcoin address and returns a detailed result.
- * Supports: P2PKH (1...), P2SH (3...), Bech32 (bc1...).
+ * Validates a Bech32m address for any supported network.
+ * @param {string} address - The address to validate.
+ * @returns {BtcAddressValidationResult}
+ */
+export function validateBech32m (address) {
+  try {
+    const decoded = bech32m.decode(address)
+    const { words } = decoded
+
+    if (words[0] === WITNESS_VERSION_BECH32) {
+      return { success: false, reason: 'INVALID_WITNESS_VERSION' }
+    }
+
+    const programBytes = bech32m.fromWords(words.slice(1))
+    // As per BIP-173, valid witness programs are 2-40 bytes.
+    if (programBytes.length < 2 || programBytes.length > 40) {
+      return { success: false, reason: 'INVALID_LENGTH' }
+    }
+
+    const prefix = address.toLowerCase().substring(0, address.lastIndexOf('1'))
+    if (prefix === NETWORKS.mainnet.bech32) return { success: true, type: 'bech32m', network: 'mainnet' }
+    if (prefix === NETWORKS.testnet.bech32) return { success: true, type: 'bech32m', network: 'testnet' }
+    if (prefix === NETWORKS.regtest.bech32) return { success: true, type: 'bech32m', network: 'regtest' }
+
+    return { success: false, reason: 'INVALID_HRP' }
+  } catch (e) {
+    if (e && e.message && e.message.toLowerCase().includes('lowercase or uppercase')) {
+      return { success: false, reason: 'MIXED_CASE' }
+    }
+    return { success: false, reason: 'INVALID_BECH32M_FORMAT' }
+  }
+}
+
+/**
+ * Validates a Bitcoin address for mainnet or testnet.
  *
- * @param {string} address
+ * @param {string} address The address to validate.
  * @returns {BtcAddressValidationResult}
  */
 export function validateBitcoinAddress (address) {
-  if (!address || typeof address !== 'string') {
+  if (address == null || typeof address !== 'string') {
     return { success: false, reason: 'INVALID_FORMAT' }
   }
-  const t = address.trim()
-
-  if (t.length === 0) {
+  const trimmed = address.trim()
+  if (trimmed.length === 0) {
     return { success: false, reason: 'EMPTY_ADDRESS' }
   }
 
-  if (t.toLowerCase().startsWith('bc1')) {
-    return validateBech32(t)
-  }
-  if (t.startsWith('1')) {
-    return validateP2PKH(t)
-  }
-  if (t.startsWith('3')) {
-    return validateP2SH(t)
+  const results = [
+    validateBase58(trimmed),
+    validateBech32(trimmed),
+    validateBech32m(trimmed)
+  ]
+
+  const successes = results.filter(r => r.success)
+
+  if (successes.length === 1) {
+    return successes[0]
   }
 
-  return { success: false, reason: 'UNKNOWN_PREFIX' }
+  if (successes.length > 1) {
+    // This case should be impossible due to address format designs
+    return { success: false, reason: 'AMBIGUOUS_ADDRESS' }
+  }
+
+  // If we reach here, all validators failed. We must choose the best error.
+  const failures = results
+
+  // A definitive failure is any reason other than a generic format mismatch.
+  // This indicates the address resembled a type but was structurally flawed.
+  const definitiveFailure = failures.find(f =>
+    f.reason !== 'INVALID_FORMAT' &&
+    f.reason !== 'INVALID_BECH32_FORMAT' &&
+    f.reason !== 'INVALID_BECH32M_FORMAT'
+  )
+
+  if (definitiveFailure) {
+    return definitiveFailure
+  }
+
+  // If all we have are format failures, return a generic one.
+  return { success: false, reason: 'INVALID_FORMAT' }
 }

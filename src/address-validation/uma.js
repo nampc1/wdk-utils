@@ -35,10 +35,15 @@ const UMA_REGEX = /^\$([^\s@]+)@([^\s@]+\.[^\s@]+)$/
  * @returns {UmaAddressValidationResult}
  */
 export function validateUmaAddress (address) {
-  if (!address || typeof address !== 'string') {
+  if (address == null || typeof address !== 'string') {
     return { success: false, reason: 'INVALID_FORMAT' }
   }
-  if (UMA_REGEX.test(address.trim())) {
+  const trimmed = address.trim()
+  if (trimmed.length === 0) {
+    return { success: false, reason: 'EMPTY_ADDRESS' }
+  }
+
+  if (UMA_REGEX.test(trimmed.toLowerCase())) {
     return { success: true, type: 'uma' }
   }
   return { success: false, reason: 'INVALID_FORMAT' }
@@ -52,10 +57,14 @@ export function validateUmaAddress (address) {
  * @returns {{ localPart: string; domain: string; lightningAddress: string } | null} Parsed parts and lightningAddress (user@domain), or null if invalid
  */
 export function resolveUmaUsername (uma) {
-  if (!uma || typeof uma !== 'string') return null
+  if (typeof uma !== 'string') {
+    return null
+  }
   const trimmed = uma.trim()
-  const match = trimmed.match(UMA_REGEX)
-  if (!match) return null
+  const match = trimmed.toLowerCase().match(UMA_REGEX)
+  if (!match) {
+    return null
+  }
   const [, localPart, domain] = match
   const lightningAddress = `${localPart}@${domain}`
   return { localPart, domain, lightningAddress }
