@@ -13,39 +13,59 @@
 // limitations under the License.
 'use strict'
 
-/**
- * Spark address validation.
- * Accepts: Bitcoin-like address OR alphanumeric string 20-100 chars.
- */
-
-import { validateBitcoinAddress } from './bitcoin.js'
+import { bech32m } from '@scure/base'
+import { validateBech32m } from './bitcoin.js'
 
 /**
- * @typedef {{ success: true, type: 'btc' | 'alphanumeric' }} SparkAddressValidationSuccess
+ * @typedef {{ success: true, type: 'spark' | 'btc' }} SparkAddressValidationSuccess
  * @typedef {{ success: false, reason: string }} SparkAddressValidationFailure
  * @typedef {SparkAddressValidationSuccess | SparkAddressValidationFailure} SparkAddressValidationResult
  */
 
+const VALID_PREFIXES = ['spark', 'sparkrt', 'sparkt', 'sparks', 'sparkl']
+
 /**
  * Validates a Spark address.
- * Accepts Bitcoin format or alphanumeric string (20-100 chars).
+ * A Spark address can be a native Bech32m encoded address or a standard
+ * Bitcoin address for L1 deposits.
  *
  * @param {string} address The address to validate.
  * @returns {SparkAddressValidationResult}
  */
 export function validateSparkAddress (address) {
-  if (!address || typeof address !== 'string') {
+  if (address == null || typeof address !== 'string') {
     return { success: false, reason: 'INVALID_FORMAT' }
   }
+
   const trimmed = address.trim()
   if (trimmed.length === 0) {
     return { success: false, reason: 'EMPTY_ADDRESS' }
   }
-  if (validateBitcoinAddress(trimmed).success) {
+
+  const lower = trimmed.toLowerCase()
+  const upper = trimmed.toUpperCase()
+  if (trimmed !== lower && trimmed !== upper) {
+    return { success: false, reason: 'MIXED_CASE' }
+  }
+
+  let decoded
+  try {
+    decoded = bech32m.decode(lower)
+  } catch (e) {
+    if (validateBech32m(trimmed).success) {
+      return { success: true, type: 'btc' }
+    }
+
+    return { success: false, reason: 'INVALID_FORMAT' }
+  }
+
+  if (VALID_PREFIXES.includes(decoded.prefix)) {
+    return { success: true, type: 'spark' }
+  }
+
+  if (validateBech32m(trimmed).success) {
     return { success: true, type: 'btc' }
   }
-  if (trimmed.length >= 20 && trimmed.length <= 100 && /^[a-zA-Z0-9]+$/.test(trimmed)) {
-    return { success: true, type: 'alphanumeric' }
-  }
+
   return { success: false, reason: 'INVALID_FORMAT' }
 }

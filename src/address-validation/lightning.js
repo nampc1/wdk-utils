@@ -21,23 +21,26 @@
 
 import { bech32 } from '@scure/base'
 
-const VALID_INVOICE_PREFIXES = ['lnbc', 'lntb', 'lnbcrt', 'lni']
+const VALID_INVOICE_PREFIXES = ['lnbc', 'lntb', 'lnbcrt', 'lnsb']
 /** Lightning address: must have dot in domain (user@domain.tld) */
 const LIGHTNING_ADDRESS_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /**
- * Strips "lightning:" URI prefix (case-insensitive). Does not trim after slice.
+ * Strips "lightning:" URI prefix (case-insensitive). The input is trimmed first.
  *
  * @param {string} input
- * @returns {string}
+ * @returns {string} Returns a string. Returns an empty string if input is not a string.
  */
 export function stripLightningPrefix (input) {
-  if (!input || typeof input !== 'string') return input
-  const trimmed = input.trim()
-  const lower = trimmed.toLowerCase()
-  if (lower.startsWith('lightning:')) {
-    return trimmed.slice(10)
+  if (typeof input !== 'string') {
+    return ''
   }
+
+  const trimmed = input.trim()
+  if (trimmed.toLowerCase().startsWith('lightning:')) {
+    return trimmed.slice(10).trim()
+  }
+
   return trimmed
 }
 
@@ -54,12 +57,19 @@ export function stripLightningPrefix (input) {
  * @returns {LightningInvoiceValidationResult}
  */
 export function validateLightningInvoice (address) {
-  if (!address || typeof address !== 'string') {
+  if (address == null || typeof address !== 'string') {
     return { success: false, reason: 'INVALID_FORMAT' }
   }
+
   const invoice = stripLightningPrefix(address)
+  if (invoice.length === 0) {
+    return { success: false, reason: 'EMPTY_ADDRESS' }
+  }
+
+  const lowerInvoice = invoice.toLowerCase()
+
   const hasValidPrefix = VALID_INVOICE_PREFIXES.some((prefix) =>
-    invoice.toLowerCase().startsWith(prefix.toLowerCase())
+    lowerInvoice.startsWith(prefix)
   )
   if (!hasValidPrefix) {
     return { success: false, reason: 'INVALID_PREFIX' }
@@ -68,10 +78,50 @@ export function validateLightningInvoice (address) {
     return { success: false, reason: 'INVALID_LENGTH' }
   }
   try {
-    bech32.decode(invoice.toLowerCase(), false)
+    bech32.decode(invoice, false)
     return { success: true, type: 'invoice' }
-  } catch {
-    return { success: false, reason: 'INVALID_CHECKSUM' }
+  } catch (e) {
+    if (e && e.message && e.message.toLowerCase().includes('lowercase or uppercase')) {
+      return { success: false, reason: 'MIXED_CASE' }
+    }
+
+    return { success: false, reason: 'INVALID_BECH32_FORMAT' }
+  }
+}
+
+/**
+ * @typedef {{ success: true, type: 'lnurl' }} LnurlValidationSuccess
+ * @typedef {{ success: false, reason: string }} LnurlValidationFailure
+ * @typedef {LnurlValidationSuccess | LnurlValidationFailure} LnurlValidationResult
+ */
+
+/**
+ * Validates an LNURL address (lnurl1... bech32 encoded URL).
+ *
+ * @param {string} address The LNURL to validate.
+ * @returns {LnurlValidationResult}
+ */
+export function validateLnurl (address) {
+  if (address == null || typeof address !== 'string') {
+    return { success: false, reason: 'INVALID_FORMAT' }
+  }
+  const lnurl = address.trim()
+  if (lnurl.length === 0) {
+    return { success: false, reason: 'EMPTY_ADDRESS' }
+  }
+
+  if (!lnurl.toLowerCase().startsWith('lnurl1')) {
+    return { success: false, reason: 'INVALID_PREFIX' }
+  }
+
+  try {
+    bech32.decode(lnurl, false)
+    return { success: true, type: 'lnurl' }
+  } catch (e) {
+    if (e && e.message && e.message.toLowerCase().includes('lowercase or uppercase')) {
+      return { success: false, reason: 'MIXED_CASE' }
+    }
+    return { success: false, reason: 'INVALID_BECH32_FORMAT' }
   }
 }
 
@@ -88,11 +138,15 @@ export function validateLightningInvoice (address) {
  * @returns {LightningAddressValidationResult}
  */
 export function validateLightningAddress (address) {
-  if (!address || typeof address !== 'string') {
+  if (address == null || typeof address !== 'string') {
     return { success: false, reason: 'INVALID_FORMAT' }
   }
-  const trimmed = address.trim().toLowerCase()
-  if (LIGHTNING_ADDRESS_EMAIL_REGEX.test(trimmed)) {
+  const trimmed = address.trim()
+  if (trimmed.length === 0) {
+    return { success: false, reason: 'EMPTY_ADDRESS' }
+  }
+
+  if (LIGHTNING_ADDRESS_EMAIL_REGEX.test(trimmed.toLowerCase())) {
     return { success: true, type: 'address' }
   }
   return { success: false, reason: 'INVALID_FORMAT' }

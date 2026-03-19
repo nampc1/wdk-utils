@@ -29,7 +29,7 @@ describe('evm', () => {
       expect(validateEVMAddress('0x742d35cc6634c0532925a3b844bc454e4438f44z')).toEqual({ success: false, reason: 'INVALID_FORMAT' });
     });
     it('returns INVALID_FORMAT for empty or non-string', () => {
-      expect(validateEVMAddress('')).toEqual({ success: false, reason: 'INVALID_FORMAT' });
+      expect(validateEVMAddress('')).toEqual({ success: false, reason: 'EMPTY_ADDRESS' });
       expect(validateEVMAddress(null)).toEqual({ success: false, reason: 'INVALID_FORMAT' });
     });
     it('trims whitespace', () => {
