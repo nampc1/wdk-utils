@@ -3,3 +3,4 @@ export * from "./evm.js";
 export * from "./lightning.js";
 export * from "./spark.js";
 export * from "./uma.js";
+export * from "./detect.js";
