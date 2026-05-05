@@ -25,7 +25,8 @@
   "dependencies": {
     "@noble/hashes": "^1.4.0",
     "@scure/base": "^2.0.0",
-    "bare-node-runtime": "^1.2.0"
+    "bare-node-runtime": "^1.2.0",
+    "bolt11": "^1.4.1"
   },
   "devDependencies": {
     "cross-env": "7.0.3",

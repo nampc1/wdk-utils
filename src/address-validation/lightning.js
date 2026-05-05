@@ -20,6 +20,7 @@
  */
 
 import { bech32 } from '@scure/base'
+import * as bolt11 from 'bolt11'
 
 const VALID_INVOICE_PREFIXES = ['lnbc', 'lntb', 'lnbcrt', 'lnsb']
 /** Lightning address: must have dot in domain (user@domain.tld) */
@@ -90,6 +91,40 @@ export function validateLightningInvoice (address) {
 }
 
 /**
+ * @typedef {import('bolt11').PaymentRequestObject} DecodedLightningInvoice
+ */
+
+/**
+ * @typedef {{ success: true, type: 'invoice', data: DecodedLightningInvoice }} LightningInvoiceDecodingSuccess
+ * @typedef {{ success: false, reason: string }} LightningInvoiceDecodingFailure
+ * @typedef {LightningInvoiceDecodingSuccess | LightningInvoiceDecodingFailure} LightningInvoiceDecodingResult
+ */
+
+/**
+ * Decodes a BOLT11 Lightning Network invoice.
+ *
+ * @param {string} invoice The BOLT11 invoice string to decode.
+ * @returns {LightningInvoiceDecodingResult}
+ */
+export function decodeLightningInvoice (invoice) {
+  if (invoice == null || typeof invoice !== 'string') {
+    return { success: false, reason: 'INVALID_FORMAT' }
+  }
+
+  const trimmed = stripLightningPrefix(invoice)
+  if (trimmed.length === 0) {
+    return { success: false, reason: 'EMPTY_INVOICE' }
+  }
+
+  try {
+    const decoded = bolt11.decode(trimmed)
+    return { success: true, type: 'invoice', data: decoded }
+  } catch (e) {
+    return { success: false, reason: 'DECODING_FAILED' }
+  }
+}
+
+/**
  * @typedef {{ success: true, type: 'lnurl' }} LnurlValidationSuccess
  * @typedef {{ success: false, reason: string }} LnurlValidationFailure
  * @typedef {LnurlValidationSuccess | LnurlValidationFailure} LnurlValidationResult
@@ -121,6 +156,50 @@ export function validateLnurl (address) {
     if (e && e.message && e.message.toLowerCase().includes('lowercase or uppercase')) {
       return { success: false, reason: 'MIXED_CASE' }
     }
+    return { success: false, reason: 'INVALID_BECH32_FORMAT' }
+  }
+}
+
+/**
+ * @typedef {{ success: true, type: 'lnurl', data: string }} LnurlDecodingSuccess
+ * @typedef {{ success: false, reason: string }} LnurlDecodingFailure
+ * @typedef {LnurlDecodingSuccess | LnurlDecodingFailure} LnurlDecodingResult
+ */
+
+/**
+ * Decodes an LNURL address into its original URL.
+ *
+ * @param {string} address The LNURL to decode.
+ * @returns {LnurlDecodingResult}
+ */
+export function decodeLnurl (address) {
+  if (address == null || typeof address !== 'string') {
+    return { success: false, reason: 'INVALID_FORMAT' }
+  }
+
+  let lnurl = address.trim()
+  if (lnurl.length === 0) {
+    return { success: false, reason: 'EMPTY_ADDRESS' }
+  }
+
+  if (lnurl.toLowerCase().startsWith('lightning:')) {
+    lnurl = lnurl.slice(10)
+  }
+
+  if (!lnurl.toLowerCase().startsWith('lnurl1')) {
+    return { success: false, reason: 'INVALID_PREFIX' }
+  }
+
+  try {
+    const { words } = bech32.decode(lnurl, false)
+    const bytes = bech32.fromWords(words)
+    const url = Buffer.from(bytes).toString()
+    return { success: true, type: 'lnurl', data: url }
+  } catch (e) {
+    if (e && e.message && e.message.toLowerCase().includes('lowercase or uppercase')) {
+      return { success: false, reason: 'MIXED_CASE' }
+    }
+
     return { success: false, reason: 'INVALID_BECH32_FORMAT' }
   }
 }

@@ -13,12 +13,26 @@ export function stripLightningPrefix(input: string): string;
  */
 export function validateLightningInvoice(address: string): LightningInvoiceValidationResult;
 /**
+ * Decodes a BOLT11 Lightning Network invoice.
+ *
+ * @param {string} invoice The BOLT11 invoice string to decode.
+ * @returns {LightningInvoiceDecodingResult}
+ */
+export function decodeLightningInvoice(invoice: string): LightningInvoiceDecodingResult;
+/**
  * Validates an LNURL address (lnurl1... bech32 encoded URL).
  *
  * @param {string} address The LNURL to validate.
  * @returns {LnurlValidationResult}
  */
 export function validateLnurl(address: string): LnurlValidationResult;
+/**
+ * Decodes an LNURL address into its original URL.
+ *
+ * @param {string} address The LNURL to decode.
+ * @returns {LnurlDecodingResult}
+ */
+export function decodeLnurl(address: string): LnurlDecodingResult;
 /**
  * Validates Lightning Address format (email: user@domain.tld).
  *
@@ -35,6 +49,17 @@ export type LightningInvoiceValidationFailure = {
     reason: string;
 };
 export type LightningInvoiceValidationResult = LightningInvoiceValidationSuccess | LightningInvoiceValidationFailure;
+export type DecodedLightningInvoice = import("bolt11").PaymentRequestObject;
+export type LightningInvoiceDecodingSuccess = {
+    success: true;
+    type: "invoice";
+    data: DecodedLightningInvoice;
+};
+export type LightningInvoiceDecodingFailure = {
+    success: false;
+    reason: string;
+};
+export type LightningInvoiceDecodingResult = LightningInvoiceDecodingSuccess | LightningInvoiceDecodingFailure;
 export type LnurlValidationSuccess = {
     success: true;
     type: "lnurl";
@@ -44,6 +69,16 @@ export type LnurlValidationFailure = {
     reason: string;
 };
 export type LnurlValidationResult = LnurlValidationSuccess | LnurlValidationFailure;
+export type LnurlDecodingSuccess = {
+    success: true;
+    type: "lnurl";
+    data: string;
+};
+export type LnurlDecodingFailure = {
+    success: false;
+    reason: string;
+};
+export type LnurlDecodingResult = LnurlDecodingSuccess | LnurlDecodingFailure;
 export type LightningAddressValidationSuccess = {
     success: true;
     type: "address";

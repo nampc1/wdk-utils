@@ -2,7 +2,9 @@ import {
   validateLightningInvoice,
   validateLightningAddress,
   validateLnurl,
-  stripLightningPrefix
+  stripLightningPrefix,
+  decodeLightningInvoice,
+  decodeLnurl
 } from '../src/address-validation/lightning.js'
 
 describe('lightning', () => {
@@ -64,6 +66,40 @@ describe('lightning', () => {
     })
   })
 
+  describe('decodeLightningInvoice', () => {
+    const invoiceWithAmount = 'lnbc15u1p3xnhl2pp5jptserfk3zk4qy42tlucycrfwxhydvlemu9pqr93tuzlv9cc7g3sdqsvfhkcap3xyhx7un8cqzpgxqzjcsp5f8c52y2stc300gl6s4xswtjpc37hrnnr3c9wvtgjfuvqmpm35evq9qyyssqy4lgd8tj637qcjp05rdpxxykjenthxftej7a2zzmwrmrl70fyj9hvj0rewhzj7jfyuwkwcg9g2jpwtk3wkjtwnkdks84hsnu8xps5vsq4gj5hs'
+    const invoiceWithoutAmount = 'lnbc1p5mg4kmpp5xh4a2kdx625hjc7f446ktn5pzq5ht2fztv0r4sqlhpw3xr406pmqsp5fy8p4h22ggwejpvs0xen6rdejpkvf4yxxzxnneyk8u52xhq3z7fsxq9z0rgqnp4qvyndeaqzman7h898jxm98dzkm0mlrsx36s93smrur7h0azyyuxc5rzjq25carzepgd4vqsyn44jrk85ezrpju92xyrk9apw4cdjh6yrwt5jgqqqqrt49lmtcqqqqqqqqqqq86qq9qrzjqw668wp0gj9vsx8dwpt7j4qv4m7zmkklnslzj0dwwwjz20v4ad6vtapyqr6zgqqqq8hxk2qqae4jsqyugqcqzpgdqq9qyyssqj8gyv9s2gftgg0nktqj8t87qam3wcn8nfadp3qjc935r4xuna77zc4g2zapmx55cjm3kyn6ff8khttnvxw4n6qe7dur3a6fqzpldx3gpky6f6z'
+
+    it('should decode a valid invoice with amount', () => {
+      const result = decodeLightningInvoice(invoiceWithAmount)
+      expect(result.success).toBe(true)
+      expect(result.data.satoshis).toBe(1500)
+      expect(result.data.millisatoshis).toBe('1500000')
+    })
+
+    it('should decode a valid invoice without amount', () => {
+      const result = decodeLightningInvoice(invoiceWithoutAmount)
+      expect(result.success).toBe(true)
+      expect(result.data.satoshis).toBe(null)
+      expect(result.data.millisatoshis).toBe(null)
+    })
+
+    it('should return DECODING_FAILED for an invalid invoice', () => {
+      const result = decodeLightningInvoice('not a bolt11 invoice')
+      expect(result).toEqual({ success: false, reason: 'DECODING_FAILED' })
+    })
+
+    it('should return EMPTY_INVOICE for an empty string', () => {
+      const result = decodeLightningInvoice('')
+      expect(result).toEqual({ success: false, reason: 'EMPTY_INVOICE' })
+    })
+
+    it('should return INVALID_FORMAT for null input', () => {
+      const result = decodeLightningInvoice(null)
+      expect(result).toEqual({ success: false, reason: 'INVALID_FORMAT' })
+    })
+  })
+
   describe('validateLnurl', () => {
     const validLnurl = 'lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhhxurj093k7mtxdae8gwfjnztwnf'
 
@@ -89,6 +125,42 @@ describe('lightning', () => {
     it('returns INVALID_FORMAT for non-string inputs', () => {
       expect(validateLnurl(null)).toEqual({ success: false, reason: 'INVALID_FORMAT' })
       expect(validateLnurl(undefined)).toEqual({ success: false, reason: 'INVALID_FORMAT' })
+    })
+  })
+
+  describe('decodeLnurl', () => {
+    const specLnurl = 'lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkcctwva6kjerv09exjcejxyt4m3me'
+    const specUrl = 'https://walletofsatoshi.com/.well-known/lnurlp/languidlyric21'
+
+    it('should decode a valid LNURL from the spec', () => {
+      const result = decodeLnurl(specLnurl)
+      expect(result).toEqual({ success: true, type: 'lnurl', data: specUrl })
+    })
+
+    it('should decode a valid LNURL with lightning: prefix', () => {
+      const result = decodeLnurl('lightning:' + specLnurl)
+      expect(result).toEqual({ success: true, type: 'lnurl', data: specUrl })
+    })
+
+    it('should decode a lowercase LNURL', () => {
+      const result = decodeLnurl(specLnurl.toLowerCase())
+      expect(result).toEqual({ success: true, type: 'lnurl', data: specUrl })
+    })
+
+    it('should return INVALID_PREFIX for a non-lnurl prefix', () => {
+      // Valid bech32 but wrong prefix
+      const result = decodeLnurl('abcd1qpzry9x8gf2tvdw0s3jn54khce6mua7lmqqqxy')
+      expect(result).toEqual({ success: false, reason: 'INVALID_PREFIX' })
+    })
+
+    it('should return INVALID_BECH32_FORMAT for an invalid checksum', () => {
+      const result = decodeLnurl(specLnurl.slice(0, -1) + (specLnurl.endsWith('a') ? 'b' : 'a'))
+      expect(result.success).toBe(false)
+      expect(result.reason).toBe('INVALID_BECH32_FORMAT')
+    })
+
+    it('should return EMPTY_ADDRESS for empty string', () => {
+      expect(decodeLnurl('')).toEqual({ success: false, reason: 'EMPTY_ADDRESS' })
     })
   })
 

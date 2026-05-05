@@ -1,33 +1,4 @@
 /**
- * @typedef {{
- *   recipient: string
- *   tokenAddress: string
- *   chainId: number
- *   amountSmallest: string
- * }} Eip681TransferRequest
- */
-/**
- * @typedef {{
- *   success: true
- *   type: 'eip681-transfer'
- *   value: Eip681TransferRequest
- * }} Eip681ParseSuccess
- */
-/**
- * @typedef {{
- *   success: false
- *   reason:
- *     | 'INVALID_FORMAT'
- *     | 'UNSUPPORTED_METHOD'
- *     | 'MISSING_REQUIRED_PARAM'
- *     | 'INVALID_RECIPIENT'
- *     | 'INVALID_AMOUNT'
- * }} Eip681ParseFailure
- */
-/**
- * @typedef {Eip681ParseSuccess | Eip681ParseFailure} Eip681ParseResult
- */
-/**
  * Returns true if the input looks like an EIP-681 style request.
  * This is syntactic detection only (not a full validity check).
  *
