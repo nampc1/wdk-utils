@@ -21,7 +21,10 @@ describe('uma', () => {
     it('returns INVALID_FORMAT for invalid format', () => {
       expect(validateUmaAddress('$no-at-sign')).toEqual({ success: false, reason: 'INVALID_FORMAT' });
       expect(validateUmaAddress('$@domain.com')).toEqual({ success: false, reason: 'INVALID_FORMAT' });
-      expect(validateUmaAddress('$user@nodot')).toEqual({ success: false, reason: 'INVALID_FORMAT' });
+      expect(validateUmaAddress('$user@nodot')).toEqual({ success: true, type: 'uma' });
+      expect(validateUmaAddress('$user%name@domain.com')).toEqual({ success: false, reason: 'INVALID_FORMAT' });
+      expect(validateUmaAddress('$user!name@domain.com')).toEqual({ success: false, reason: 'INVALID_FORMAT' });
+      expect(validateUmaAddress('$user@dom#ain.com')).toEqual({ success: false, reason: 'INVALID_FORMAT' });
       expect(validateUmaAddress('')).toEqual({ success: false, reason: 'EMPTY_ADDRESS' });
       expect(validateUmaAddress(null)).toEqual({ success: false, reason: 'INVALID_FORMAT' });
     });

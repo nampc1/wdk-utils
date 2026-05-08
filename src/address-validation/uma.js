@@ -19,8 +19,11 @@
  * Resolves UMA usernames into the underlying Lightning Address (user@domain).
  */
 
-/** UMA format: leading $ then local@domain with dot in domain */
-const UMA_REGEX = /^\$([^\s@]+)@([^\s@]+\.[^\s@]+)$/
+/** UMA username format: mandatory $ then alphanumeric/.-_+ */
+const USER_NAME_REGEX = /^\$[a-zA-Z0-9-._+]+$/
+/** Domain format: labels of up to 63 chars, alphanumeric/_- starting with alphanumeric */
+const DOMAIN_REGEX = /^([a-zA-Z0-9_]{1}[a-zA-Z0-9_-]{0,62}){1}(\.[a-zA-Z0-9_]{1}[a-zA-Z0-9_-]{0,62})*[._]?$/
+const LOCALHOST_REGEX = /^localhost(:[0-9]+)?$/
 
 /**
  * @typedef {{ success: true, type: 'uma' }} UmaAddressValidationSuccess
@@ -43,9 +46,20 @@ export function validateUmaAddress (address) {
     return { success: false, reason: 'EMPTY_ADDRESS' }
   }
 
-  if (UMA_REGEX.test(trimmed.toLowerCase())) {
+  const parts = trimmed.split('@')
+  if (parts.length !== 2) {
+    return { success: false, reason: 'INVALID_FORMAT' }
+  }
+
+  const [username, domain] = parts
+  if (!USER_NAME_REGEX.test(username)) {
+    return { success: false, reason: 'INVALID_FORMAT' }
+  }
+
+  if (domain.toLowerCase() === 'localhost' || LOCALHOST_REGEX.test(domain) || DOMAIN_REGEX.test(domain)) {
     return { success: true, type: 'uma' }
   }
+
   return { success: false, reason: 'INVALID_FORMAT' }
 }
 
@@ -61,11 +75,15 @@ export function resolveUmaUsername (uma) {
     return null
   }
   const trimmed = uma.trim()
-  const match = trimmed.toLowerCase().match(UMA_REGEX)
-  if (!match) {
+  const parts = trimmed.split('@')
+  if (parts.length !== 2) {
     return null
   }
-  const [, localPart, domain] = match
+  const [username, domain] = parts
+  if (!USER_NAME_REGEX.test(username) || (!LOCALHOST_REGEX.test(domain) && !DOMAIN_REGEX.test(domain) && domain.toLowerCase() !== 'localhost')) {
+    return null
+  }
+  const localPart = username.slice(1)
   const lightningAddress = `${localPart}@${domain}`
   return { localPart, domain, lightningAddress }
 }

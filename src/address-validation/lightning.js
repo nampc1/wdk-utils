@@ -23,8 +23,8 @@ import { bech32 } from '@scure/base'
 import * as bolt11 from 'bolt11'
 
 const VALID_INVOICE_PREFIXES = ['lnbc', 'lntb', 'lnbcrt', 'lnsb']
-/** Lightning address: must have dot in domain (user@domain.tld) */
-const LIGHTNING_ADDRESS_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+/** Lightning address: strict email (user@domain.tld). */
+const LIGHTNING_ADDRESS_EMAIL_REGEX = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
 /**
  * Strips "lightning:" URI prefix (case-insensitive). The input is trimmed first.

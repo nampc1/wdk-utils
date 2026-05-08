@@ -179,6 +179,13 @@ describe('lightning', () => {
       expect(validateLightningAddress('user@localhost')).toEqual({ success: false, reason: 'INVALID_FORMAT' })
     })
 
+    it('returns INVALID_FORMAT for invalid characters or structure', () => {
+      expect(validateLightningAddress('user%name@domain.com')).toEqual({ success: false, reason: 'INVALID_FORMAT' })
+      expect(validateLightningAddress('user!name@domain.com')).toEqual({ success: false, reason: 'INVALID_FORMAT' })
+      expect(validateLightningAddress('user@dom#ain.com')).toEqual({ success: false, reason: 'INVALID_FORMAT' })
+      expect(validateLightningAddress('user@domain')).toEqual({ success: false, reason: 'INVALID_FORMAT' })
+    })
+
     it('returns INVALID_FORMAT for other invalid formats', () => {
       expect(validateLightningAddress('notanemail')).toEqual({ success: false, reason: 'INVALID_FORMAT' })
       expect(validateLightningAddress('@domain.com')).toEqual({ success: false, reason: 'INVALID_FORMAT' })
