@@ -182,8 +182,10 @@ export function decodeLnurl (address) {
     return { success: false, reason: 'EMPTY_ADDRESS' }
   }
 
-  if (lnurl.toLowerCase().startsWith('lightning:')) {
-    lnurl = lnurl.slice(10)
+  lnurl = stripLightningPrefix(lnurl)
+
+  if (lnurl.length === 0) {
+    return { success: false, reason: 'EMPTY_ADDRESS' }
   }
 
   if (!lnurl.toLowerCase().startsWith('lnurl1')) {

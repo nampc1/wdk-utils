@@ -162,6 +162,11 @@ describe('lightning', () => {
     it('should return EMPTY_ADDRESS for empty string', () => {
       expect(decodeLnurl('')).toEqual({ success: false, reason: 'EMPTY_ADDRESS' })
     })
+
+    it('should return EMPTY_ADDRESS for string that is empty after stripping prefix', () => {
+      expect(decodeLnurl('lightning:')).toEqual({ success: false, reason: 'EMPTY_ADDRESS' })
+      expect(decodeLnurl('lightning:  ')).toEqual({ success: false, reason: 'EMPTY_ADDRESS' })
+    })
   })
 
   describe('validateLightningAddress', () => {
